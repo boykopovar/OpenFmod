@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string_view>
+#include <vector>
 namespace OpenFmod {
 class FormatError : public std::runtime_error {
 public:
@@ -17,6 +18,8 @@ public:
     std::size_t Remaining() const;
     std::string_view Read(std::size_t size);
     std::uint64_t Unsigned(std::size_t size);
+    std::uint32_t Compact();
+    std::vector<std::string_view> Elements(std::size_t elementSize);
     float Float();
     void Finish() const;
 private:

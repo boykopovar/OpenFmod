@@ -2,7 +2,9 @@
 #include "OpenFmod/Binary/Reader.hpp"
 #include <stdexcept>
 #include <string>
+void CheckCatalog();
 int main() {
+    CheckCatalog();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";

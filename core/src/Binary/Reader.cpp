@@ -21,6 +21,25 @@ std::uint64_t Reader::Unsigned(std::size_t size) {
     }
     return value;
 }
+std::uint32_t Reader::Compact() {
+    const auto low = static_cast<std::uint32_t>(Unsigned(2));
+    if (!(low & 0x8000)) return low;
+    return (low & 0x7fff) | (static_cast<std::uint32_t>(Unsigned(2)) << 15);
+}
+std::vector<std::string_view> Reader::Elements(std::size_t elementSize) {
+    const auto header = Compact();
+    const auto count = header >> 1;
+    if (!elementSize || count > Remaining() / elementSize) throw FormatError("Invalid element array length");
+    std::vector<std::string_view> result;
+    result.reserve(count);
+    std::size_t size = 0;
+    for (std::uint32_t index = 0; index < count; ++index) {
+        if (!index || !(header & 1)) size = static_cast<std::size_t>(Unsigned(2));
+        if (size != elementSize) throw FormatError("Unexpected element size: " + std::to_string(size));
+        result.push_back(Read(size));
+    }
+    return result;
+}
 float Reader::Float() {
     static_assert(sizeof(float) == 4 && std::numeric_limits<float>::is_iec559);
     const auto bits = static_cast<std::uint32_t>(Unsigned(4));
