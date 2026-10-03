@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.21)
+project(OpenFmod VERSION 0.1.0 LANGUAGES CXX)
+option(OPENFMOD_BUILD_TESTS "Build OpenFmod checks" ${PROJECT_IS_TOP_LEVEL})
+add_subdirectory(core)
+if(OPENFMOD_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
