@@ -1,6 +1,5 @@
 #include "OpenFmod/Bank/Catalog.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
-#include <algorithm>
 #include <unordered_set>
 namespace OpenFmod::Bank {
 namespace {
@@ -31,7 +30,8 @@ std::vector<CatalogEntry> ReadCatalog(std::string_view bytes) {
     std::vector<CatalogEntry> entries;
     for (const auto element : reader.Elements(16)) {
         CatalogEntry entry;
-        std::copy(element.begin(), element.end(), entry.Id.begin());
+        Binary::Reader identity(element);
+        entry.Id = ReadGuid(identity);
         entries.push_back(std::move(entry));
     }
     const auto blobSize = reader.Compact();

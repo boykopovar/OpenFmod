@@ -2,6 +2,7 @@ add_library(OpenFmod STATIC
     src/Binary/Reader.cpp
     src/Bank/Container.cpp
     src/Bank/Catalog.cpp
+    src/Bank/Sources.cpp
     src/Sound/Bank.cpp
     src/Sound/Metadata.cpp
 )
