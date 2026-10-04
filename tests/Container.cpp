@@ -3,8 +3,10 @@
 #include <stdexcept>
 #include <string>
 void CheckCatalog();
+void CheckSound();
 int main() {
     CheckCatalog();
+    CheckSound();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";
