@@ -5,10 +5,12 @@
 void CheckCatalog();
 void CheckSound();
 void CheckVorbis();
+void CheckPlaylist();
 int main() {
     CheckCatalog();
     CheckSound();
     CheckVorbis();
+    CheckPlaylist();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";
