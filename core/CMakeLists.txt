@@ -5,6 +5,8 @@ add_library(OpenFmod STATIC
     src/Bank/Sources.cpp
     src/Sound/Bank.cpp
     src/Sound/Metadata.cpp
+    src/Sound/Vorbis/Setup.cpp
+    src/Sound/Vorbis/Decoder.cpp
 )
 add_library(OpenFmod::OpenFmod ALIAS OpenFmod)
 target_include_directories(OpenFmod PUBLIC include)
