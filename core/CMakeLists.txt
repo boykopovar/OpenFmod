@@ -9,6 +9,7 @@ add_library(OpenFmod STATIC
 add_library(OpenFmod::OpenFmod ALIAS OpenFmod)
 target_include_directories(OpenFmod PUBLIC include)
 target_compile_features(OpenFmod PUBLIC cxx_std_17)
+target_link_libraries(OpenFmod PRIVATE vorbis vorbisenc)
 set_target_properties(OpenFmod PROPERTIES CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
     target_compile_options(OpenFmod PRIVATE /W4 /permissive- /utf-8)
