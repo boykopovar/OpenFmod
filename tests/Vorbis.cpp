@@ -5,10 +5,11 @@
 #include <vorbis/vorbisenc.h>
 #include <cmath>
 #include <stdexcept>
-void CheckVorbis() {
+namespace {
+void checkSignal(int channels, float quality) {
     using namespace OpenFmod;
     Sound::Vorbis::State encoder;
-    if (vorbis_encode_init_vbr(&encoder.Info, 1, 48000, 0.4f)) throw std::runtime_error("Cannot encode test signal");
+    if (vorbis_encode_init_vbr(&encoder.Info, channels, 48000, quality)) throw std::runtime_error("Cannot encode test signal");
     if (vorbis_analysis_init(&encoder.Dsp, &encoder.Info) || vorbis_block_init(&encoder.Dsp, &encoder.Block)) {
         throw std::runtime_error("Cannot initialize test encoder");
     }
@@ -18,13 +19,17 @@ void CheckVorbis() {
     }
     Sound::Sample sample;
     sample.Rate = 48000;
-    sample.Channels = 1;
+    sample.Channels = static_cast<std::uint32_t>(channels);
     sample.Frames = 4800;
     sample.VorbisSetup = Binary::Crc32({reinterpret_cast<char*>(setup.packet), static_cast<std::size_t>(setup.bytes)});
     auto pcm = vorbis_analysis_buffer(&encoder.Dsp, static_cast<int>(sample.Frames));
     if (!pcm) throw std::runtime_error("Cannot allocate test signal");
-    const auto signal = [](std::size_t frame) { return 0.25f * std::sin(static_cast<float>(frame) * 0.057595865f); };
-    for (std::size_t frame = 0; frame < sample.Frames; ++frame) pcm[0][frame] = signal(frame);
+    const auto signal = [](std::size_t frame, int channel) {
+        return 0.25f * std::sin(static_cast<float>(frame) * (0.057595865f + channel * 0.012f));
+    };
+    for (int channel = 0; channel < channels; ++channel) {
+        for (std::size_t frame = 0; frame < sample.Frames; ++frame) pcm[channel][frame] = signal(frame, channel);
+    }
     if (vorbis_analysis_wrote(&encoder.Dsp, static_cast<int>(sample.Frames)) || vorbis_analysis_wrote(&encoder.Dsp, 0)) {
         throw std::runtime_error("Cannot finalize test signal");
     }
@@ -44,16 +49,33 @@ void CheckVorbis() {
     sample.Data = bytes;
     Sound::Vorbis::SetupRegistry registry;
     const auto decoded = Sound::Vorbis::Decode(sample, registry);
-    if (decoded.size() != sample.Frames) throw std::runtime_error("Wrong decoded signal length");
+    if (decoded.size() != sample.Frames * sample.Channels) throw std::runtime_error("Wrong decoded signal length");
     double error = 0;
     for (std::size_t frame = 0; frame < decoded.size(); ++frame) {
-        const auto difference = decoded[frame] - signal(frame);
+        const auto difference = decoded[frame] - signal(frame / sample.Channels, static_cast<int>(frame % sample.Channels));
         error += difference * difference;
     }
     if (std::sqrt(error / decoded.size()) > 0.01) throw std::runtime_error("Decoded signal does not match input");
+    Sound::Vorbis::Decoder stream(sample, registry);
+    std::vector<float> streamed(decoded.size());
+    std::size_t position = 0;
+    while (position < sample.Frames) {
+        const auto count = stream.Read(streamed.data() + position * sample.Channels, 127);
+        if (!count || count > 127) throw std::runtime_error("Invalid streaming decoder progress");
+        position += count;
+        if (stream.Position() != position) throw std::runtime_error("Incorrect streaming decoder position");
+    }
+    float tail = 42;
+    if (stream.Read(&tail, 1) || tail != 42 || stream.Read(nullptr, 0)) throw std::runtime_error("Decoder read beyond end");
+    if (streamed != decoded) throw std::runtime_error("Streaming changed decoded signal");
     sample.Data = std::string_view(bytes).substr(0, 1);
     bool rejected = false;
     try { Sound::Vorbis::Decode(sample, registry); }
     catch (const FormatError&) { rejected = true; }
     if (!rejected) throw std::runtime_error("Truncated audio accepted");
+}
+}
+void CheckVorbis() {
+    checkSignal(1, 0.4f);
+    checkSignal(2, 0.24f);
 }
