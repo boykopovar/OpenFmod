@@ -10,6 +10,8 @@ add_library(OpenFmod STATIC
     src/Studio/Playlist.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
+    src/Studio/Modulation/Curve.cpp
+    src/Studio/Modulation/Mapping.cpp
 )
 add_library(OpenFmod::OpenFmod ALIAS OpenFmod)
 target_include_directories(OpenFmod PUBLIC include)
