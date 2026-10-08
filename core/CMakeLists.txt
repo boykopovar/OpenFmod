@@ -7,6 +7,9 @@ add_library(OpenFmod STATIC
     src/Sound/Metadata.cpp
     src/Sound/Vorbis/Setup.cpp
     src/Sound/Vorbis/Decoder.cpp
+    src/Audio/VorbisSource.cpp
+    src/Audio/Voice.cpp
+    src/Audio/Mixer.cpp
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Modulation/Property.cpp
@@ -17,7 +20,8 @@ add_library(OpenFmod STATIC
 add_library(OpenFmod::OpenFmod ALIAS OpenFmod)
 target_include_directories(OpenFmod PUBLIC include)
 target_compile_features(OpenFmod PUBLIC cxx_std_17)
-target_link_libraries(OpenFmod PRIVATE vorbis vorbisenc)
+find_package(Threads REQUIRED)
+target_link_libraries(OpenFmod PRIVATE vorbis vorbisenc Threads::Threads)
 set_target_properties(OpenFmod PROPERTIES CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
     target_compile_options(OpenFmod PRIVATE /W4 /permissive- /utf-8)

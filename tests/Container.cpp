@@ -8,6 +8,7 @@ void CheckVorbis();
 void CheckPlaylist();
 void CheckModulation();
 void CheckCondition();
+void CheckMixer();
 int main() {
     CheckCatalog();
     CheckSound();
@@ -15,6 +16,7 @@ int main() {
     CheckPlaylist();
     CheckModulation();
     CheckCondition();
+    CheckMixer();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";
