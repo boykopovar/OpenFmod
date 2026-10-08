@@ -4,9 +4,9 @@
 #include <stdexcept>
 void CheckModulation() {
     using namespace OpenFmod::Studio;
-    Mapping mapping({}, {{-1, -24}, {0, 0}, {1, 24}});
-    if (mapping.Transform(0.5f) != 12 || mapping.Inverse(-6) != -0.25f) throw std::runtime_error("Incorrect property mapping");
-    if (mapping.Transform(-2) != -24 || mapping.Inverse(50) != 1) throw std::runtime_error("Mapping exceeded boundary");
+    Mapping mapping({}, {{-1, -30}, {0, 0}, {1, 30}});
+    if (mapping.Transform(0.5f) != 15 || mapping.Inverse(-7.5f) != -0.25f) throw std::runtime_error("Incorrect property mapping");
+    if (mapping.Transform(-2) != -30 || mapping.Inverse(50) != 1) throw std::runtime_error("Mapping exceeded boundary");
     Curve curve({}, {}, {{0, 0, 0, Interpolation::Exponential}, {100, 1, 0, Interpolation::Constant}, {200, 3, 0, Interpolation::Exponential}});
     if (curve.EvaluateTick(50) != 0.5f || curve.EvaluateTick(150) != 1 || curve.EvaluateTick(200) != 3) {
         throw std::runtime_error("Incorrect timeline curve evaluation");

@@ -1,25 +1,23 @@
 #include "OpenFmod/Sound/Bank.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
+#include "Data/Writer.hpp"
 #include <stdexcept>
 #include <string>
 void CheckSound() {
     std::string bytes = "FSB5";
-    const auto append = [&bytes](std::uint64_t value, unsigned width) {
-        for (unsigned index = 0; index < width; ++index) bytes += static_cast<char>((value >> (index * 8)) & 255);
-    };
-    append(1, 4);
-    append(1, 4);
-    append(20, 4);
-    append(0, 4);
-    append(4, 4);
-    append(15, 4);
-    append(1, 4);
-    append(0, 4);
+    TestData::Append(bytes, 1, 4);
+    TestData::Append(bytes, 1, 4);
+    TestData::Append(bytes, 20, 4);
+    TestData::Append(bytes, 0, 4);
+    TestData::Append(bytes, 4, 4);
+    TestData::Append(bytes, 15, 4);
+    TestData::Append(bytes, 1, 4);
+    TestData::Append(bytes, 0, 4);
     bytes.append(24, '\0');
-    append((std::uint64_t{64} << 34) | (9 << 1) | 1, 8);
-    append((11 << 25) | (8 << 1), 4);
-    append(0x12345678, 4);
-    append(0, 4);
+    TestData::Append(bytes, (std::uint64_t{64} << 34) | (9 << 1) | 1, 8);
+    TestData::Append(bytes, (11 << 25) | (8 << 1), 4);
+    TestData::Append(bytes, 0x12345678, 4);
+    TestData::Append(bytes, 0, 4);
     bytes.append(4, '\0');
     const auto bank = OpenFmod::Sound::ReadBank(bytes);
     if (bank.Samples.size() != 1) throw std::runtime_error("Wrong sample count");

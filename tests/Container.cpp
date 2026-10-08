@@ -7,12 +7,14 @@ void CheckSound();
 void CheckVorbis();
 void CheckPlaylist();
 void CheckModulation();
+void CheckCondition();
 int main() {
     CheckCatalog();
     CheckSound();
     CheckVorbis();
     CheckPlaylist();
     CheckModulation();
+    CheckCondition();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";

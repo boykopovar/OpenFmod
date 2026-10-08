@@ -8,6 +8,7 @@ add_library(OpenFmod STATIC
     src/Sound/Vorbis/Setup.cpp
     src/Sound/Vorbis/Decoder.cpp
     src/Studio/Playlist.cpp
+    src/Studio/Condition.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
     src/Studio/Modulation/Curve.cpp

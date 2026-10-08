@@ -1,32 +1,30 @@
 #include "OpenFmod/Bank/Catalog.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
+#include "Data/Writer.hpp"
 #include <stdexcept>
 #include <string>
 namespace {
-void append(std::string& bytes, std::uint32_t value, unsigned width) {
-    for (unsigned index = 0; index < width; ++index) bytes += static_cast<char>((value >> (index * 8)) & 255);
-}
 std::string catalog() {
     std::string bytes;
-    append(bytes, 1, 4);
-    append(bytes, 5, 2);
-    append(bytes, 8, 2);
-    append(bytes, 0xffffff, 4);
-    append(bytes, 0x1000001, 4);
-    append(bytes, 0x65000000, 4);
-    append(bytes, 0, 4);
-    append(bytes, 3, 2);
-    append(bytes, 16, 2);
+    TestData::Append(bytes, 1, 4);
+    TestData::Append(bytes, 5, 2);
+    TestData::Append(bytes, 8, 2);
+    TestData::Append(bytes, 0xffffff, 4);
+    TestData::Append(bytes, 0x1000001, 4);
+    TestData::Append(bytes, 0x65000000, 4);
+    TestData::Append(bytes, 0, 4);
+    TestData::Append(bytes, 3, 2);
+    TestData::Append(bytes, 16, 2);
     bytes.append(16, '\x12');
     const std::string path = "event:/synthetic/test";
-    append(bytes, static_cast<std::uint32_t>(path.size() + 1), 2);
+    TestData::Append(bytes, static_cast<std::uint32_t>(path.size() + 1), 2);
     bytes += path;
     bytes += '\0';
-    append(bytes, 1, 2);
-    append(bytes, 1, 3);
-    append(bytes, 2, 2);
-    append(bytes, 0xffffff, 3);
-    append(bytes, 0, 3);
+    TestData::Append(bytes, 1, 2);
+    TestData::Append(bytes, 1, 3);
+    TestData::Append(bytes, 2, 2);
+    TestData::Append(bytes, 0xffffff, 3);
+    TestData::Append(bytes, 0, 3);
     return bytes;
 }
 }
@@ -49,8 +47,8 @@ void CheckCatalog() {
         if (!rejected) throw std::runtime_error("Truncated catalog accepted");
     }
     std::string compact;
-    append(compact, 0x8001, 2);
-    append(compact, 2, 2);
+    TestData::Append(compact, 0x8001, 2);
+    TestData::Append(compact, 2, 2);
     OpenFmod::Binary::Reader reader(compact);
     if (reader.Compact() != 65537) throw std::runtime_error("Extended integer mismatch");
     reader.Finish();
