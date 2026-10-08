@@ -2,6 +2,7 @@
 #define OPENFMOD_BINARY_READER_HPP
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
@@ -19,7 +20,7 @@ public:
     std::string_view Read(std::size_t size);
     std::uint64_t Unsigned(std::size_t size);
     std::uint32_t Compact();
-    std::vector<std::string_view> Elements(std::size_t elementSize);
+    std::vector<std::string_view> Elements(std::optional<std::size_t> elementSize = std::nullopt);
     float Float();
     void Finish() const;
 private:

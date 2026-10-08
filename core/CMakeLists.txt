@@ -8,6 +8,8 @@ add_library(OpenFmod STATIC
     src/Sound/Vorbis/Setup.cpp
     src/Sound/Vorbis/Decoder.cpp
     src/Studio/Playlist.cpp
+    src/Studio/Modulation/Property.cpp
+    src/Studio/Modulation/Model.cpp
 )
 add_library(OpenFmod::OpenFmod ALIAS OpenFmod)
 target_include_directories(OpenFmod PUBLIC include)
