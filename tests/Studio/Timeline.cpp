@@ -1,9 +1,23 @@
 #include "OpenFmod/Studio/Timeline/Model.hpp"
 #include "OpenFmod/Studio/Timeline/Transition.hpp"
+#include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckTimeline() {
     using namespace TestData;
+    using namespace OpenFmod::Studio;
+    TempoGrid standard({});
+    if (standard.Quantize(1, QuantizationMode::Bars, 1) != 96000
+        || standard.Quantize(12000, QuantizationMode::EighthNotes, 1) != 12000
+        || standard.Quantize(12001, QuantizationMode::EighthNotes, 1) != 24000) {
+        throw std::runtime_error("Incorrect musical quantization");
+    }
+    TempoGrid changed({{{}, 4, 4, 24000, 120}, {{}, 3, 4, 60000, 60}});
+    if (changed.Quantize(1, QuantizationMode::EighthNotes, 1) != 12000
+        || changed.Quantize(24001, QuantizationMode::Bars, 1) != 60000
+        || changed.Quantize(60001, QuantizationMode::EighthNotes, 1) != 84000) {
+        throw std::runtime_error("Tempo change lost its grid anchor");
+    }
     std::string bytes(16, '\0');
     Append(bytes, 1, 2);
     Append(bytes, 3, 2);

@@ -24,6 +24,7 @@ struct TempoMarker {
     std::uint32_t Denominator{};
     std::uint32_t Position{};
     float BeatsPerMinute{};
+    void Validate() const;
 };
 struct Timeline {
     Bank::Guid Id{};

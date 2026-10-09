@@ -1,6 +1,11 @@
 #include "OpenFmod/Studio/Timeline/Model.hpp"
 #include <cmath>
 namespace OpenFmod::Studio {
+void TempoMarker::Validate() const {
+    if (!Numerator || !Denominator || Denominator > 16 || !std::isfinite(BeatsPerMinute) || BeatsPerMinute < 0) {
+        throw FormatError("Invalid timeline tempo marker");
+    }
+}
 namespace {
 std::vector<ScheduledInstrument> readInstruments(Binary::Reader& reader) {
     std::vector<ScheduledInstrument> result;
@@ -47,10 +52,7 @@ Timeline ReadTimeline(std::string_view bytes) {
         marker.Denominator = static_cast<std::uint32_t>(entry.Unsigned(4));
         marker.Position = static_cast<std::uint32_t>(entry.Unsigned(4));
         marker.BeatsPerMinute = entry.Float();
-        if (!marker.Numerator || !marker.Denominator || marker.Denominator > 16
-            || !std::isfinite(marker.BeatsPerMinute) || marker.BeatsPerMinute < 0) {
-            throw FormatError("Invalid timeline tempo marker");
-        }
+        marker.Validate();
         entry.Finish();
         result.Tempo.push_back(marker);
     }

@@ -14,6 +14,7 @@ add_library(OpenFmod STATIC
     src/Studio/Condition.cpp
     src/Studio/Timeline/Model.cpp
     src/Studio/Timeline/Transition.cpp
+    src/Studio/Timeline/TempoGrid.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
     src/Studio/Modulation/EnvelopeState.cpp
