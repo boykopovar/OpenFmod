@@ -1,6 +1,7 @@
 #include "OpenFmod/Studio/Modulation/Curve.hpp"
 #include "OpenFmod/Studio/Modulation/Mapping.hpp"
 #include "OpenFmod/Studio/Modulation/EnvelopeState.hpp"
+#include "OpenFmod/Studio/Modulation/FollowerState.hpp"
 #include <cmath>
 #include <stdexcept>
 void CheckModulation() {
@@ -24,6 +25,24 @@ void CheckModulation() {
     EnvelopeState instant(Envelope{});
     instant.Release(0);
     if (instant.Evaluate(0) != 0 || !instant.IsFinished(0)) throw std::runtime_error("Zero duration envelope failed");
+    EnvelopeFollower followerParameters;
+    followerParameters.MinimumDecibels = -60;
+    followerParameters.MaximumDecibels = 0;
+    followerParameters.AttackMilliseconds = 100;
+    followerParameters.ReleaseMilliseconds = 200;
+    FollowerState follower(followerParameters);
+    const float loud[] = {1, -1};
+    const float quiet[] = {0, 0};
+    if (follower.Process(loud, 2, 25) != 0.25f || follower.Process(loud, 2, 75) != 1
+        || follower.Process(quiet, 2, 100) != 0.5f || follower.Process(quiet, 2, 100) != 0) {
+        throw std::runtime_error("Incorrect follower attack or release");
+    }
+    followerParameters.RootMeanSquare = true;
+    followerParameters.AttackMilliseconds = 0;
+    FollowerState rms(followerParameters);
+    const float sparse[] = {1, 0, 0, 0};
+    const auto expectedRms = (20 * std::log10(0.5f) + 60) / 60;
+    if (std::abs(rms.Process(sparse, 4, 1) - expectedRms) > 0.000001f) throw std::runtime_error("Incorrect follower rms");
     Mapping mapping({}, {{-1, -30}, {0, 0}, {1, 30}});
     if (mapping.Transform(0.5f) != 15 || mapping.Inverse(-7.5f) != -0.25f) throw std::runtime_error("Incorrect property mapping");
     if (mapping.Transform(-2) != -30 || mapping.Inverse(50) != 1) throw std::runtime_error("Mapping exceeded boundary");
