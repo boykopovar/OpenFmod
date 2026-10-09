@@ -1,4 +1,5 @@
 #include "OpenFmod/Studio/Timeline/Model.hpp"
+#include "OpenFmod/Studio/Timeline/Transition.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckTimeline() {
@@ -33,6 +34,19 @@ void CheckTimeline() {
         || model.TimeLocked[0].Duration != 456 || model.Markers[0].Name != "test"
         || model.Tempo[0].BeatsPerMinute != 96 || !model.SustainPoints[0].Trigger.Evaluate({}, false)) {
         throw std::runtime_error("Incorrect timeline model");
+    }
+    std::string transition(32, '\0');
+    Append(transition, 100, 4);
+    Append(transition, 900, 4);
+    Append(transition, 0, 4);
+    Append(transition, 1, 4);
+    Append(transition, 2, 4);
+    AppendFloat(transition, 75);
+    Append(transition, 4, 4);
+    const auto region = OpenFmod::Studio::ReadTransition(transition);
+    if (region.Start != 100 || region.End != 900 || region.QuantizationMode != 1
+        || region.QuantizationInterval != 2 || region.Probability != 75 || region.Flags != 4) {
+        throw std::runtime_error("Incorrect transition region");
     }
     bytes.pop_back();
     try { OpenFmod::Studio::ReadTimeline(bytes); }

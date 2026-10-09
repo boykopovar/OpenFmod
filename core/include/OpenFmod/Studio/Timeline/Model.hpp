@@ -16,7 +16,7 @@ struct NamedMarker {
     Bank::Guid Id{};
     std::uint32_t Position{};
     std::string Name;
-    std::uint32_t Flags{};
+    std::uint32_t Duration{};
 };
 struct TempoMarker {
     Bank::Guid Id{};

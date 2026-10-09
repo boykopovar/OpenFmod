@@ -13,6 +13,7 @@ add_library(OpenFmod STATIC
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Timeline/Model.cpp
+    src/Studio/Timeline/Transition.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
     src/Studio/Modulation/EnvelopeState.cpp

@@ -35,7 +35,7 @@ Timeline ReadTimeline(std::string_view bytes) {
         marker.Id = Bank::ReadGuid(entry);
         marker.Position = static_cast<std::uint32_t>(entry.Unsigned(4));
         marker.Name = std::string(entry.Read(entry.Compact()));
-        marker.Flags = static_cast<std::uint32_t>(entry.Unsigned(4));
+        marker.Duration = static_cast<std::uint32_t>(entry.Unsigned(4));
         entry.Finish();
         result.Markers.push_back(std::move(marker));
     }
@@ -47,7 +47,8 @@ Timeline ReadTimeline(std::string_view bytes) {
         marker.Denominator = static_cast<std::uint32_t>(entry.Unsigned(4));
         marker.Position = static_cast<std::uint32_t>(entry.Unsigned(4));
         marker.BeatsPerMinute = entry.Float();
-        if (!marker.Numerator || !marker.Denominator || !std::isfinite(marker.BeatsPerMinute) || marker.BeatsPerMinute <= 0) {
+        if (!marker.Numerator || !marker.Denominator || marker.Denominator > 16
+            || !std::isfinite(marker.BeatsPerMinute) || marker.BeatsPerMinute < 0) {
             throw FormatError("Invalid timeline tempo marker");
         }
         entry.Finish();
