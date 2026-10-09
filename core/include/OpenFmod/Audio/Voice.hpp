@@ -19,6 +19,11 @@ public:
     void SetGain(float value);
     void SetPitch(float value);
 private:
+    struct CachedFrame {
+        std::uint64_t Position{};
+        std::array<float, 2> Value{};
+        bool Valid{};
+    };
     std::array<float, 2> readFrame(std::uint64_t frame);
     std::unique_ptr<IAudioSource> source;
     VoiceSettings settings;
@@ -28,6 +33,8 @@ private:
     std::array<float, 1024> buffer{};
     std::uint64_t bufferBegin{};
     std::size_t buffered{};
+    std::array<CachedFrame, 2> recent{};
+    std::size_t recentIndex{};
 };
 }
 #endif

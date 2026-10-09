@@ -5,19 +5,23 @@
 namespace {
 class Signal final : public OpenFmod::Audio::IAudioSource {
 public:
-    OpenFmod::Audio::Format GetFormat() const override { return {4, 2, 4}; }
+    explicit Signal(std::vector<float> data = {0, 0, 1, 2, 3, 4, 5, 6}, std::size_t* rewinds = nullptr)
+        : data(std::move(data)), rewinds(rewinds) {}
+    OpenFmod::Audio::Format GetFormat() const override { return {4, 2, data.size() / 2}; }
     std::size_t Read(float* output, std::size_t frames) override {
-        const auto count = std::min(frames, std::size_t{4} - position);
+        const auto count = std::min(frames, data.size() / 2 - position);
         std::copy_n(data.data() + position * 2, count * 2, output);
         position += count;
         return count;
     }
     void Seek(std::uint64_t frame) override {
-        if (frame > 4) throw std::runtime_error("Invalid test seek");
+        if (frame > data.size() / 2) throw std::runtime_error("Invalid test seek");
+        if (rewinds && frame < position) ++*rewinds;
         position = static_cast<std::size_t>(frame);
     }
 private:
-    std::array<float, 8> data{0, 0, 1, 2, 3, 4, 5, 6};
+    std::vector<float> data;
+    std::size_t* rewinds{};
     std::size_t position{};
 };
 }
@@ -60,4 +64,11 @@ void CheckMixer() {
     if (!mixer.IsPlaying(loop) || !mixer.Stop(loop) || mixer.IsPlaying(loop)) throw std::runtime_error("Loop could not be stopped");
     mixer.Render(result.data(), 8);
     if (std::any_of(result.begin(), result.end(), [](float value) { return value != 0; })) throw std::runtime_error("Stopped voice emitted audio");
+    std::size_t rewinds = 0;
+    settings = {};
+    settings.Pitch = 0.25f;
+    mixer.Play(std::make_unique<Signal>(std::vector<float>(4096, 1), &rewinds), settings);
+    result.resize(16384);
+    mixer.Render(result.data(), 8192);
+    if (rewinds) throw std::runtime_error("Resampling rewound a sequential audio stream");
 }

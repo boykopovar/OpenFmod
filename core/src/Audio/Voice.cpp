@@ -27,6 +27,9 @@ void Voice::SetPitch(float value) {
     settings.Pitch = value;
 }
 std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
+    for (const auto& cached : recent) {
+        if (cached.Valid && cached.Position == frame) return cached.Value;
+    }
     if (!buffered || frame < bufferBegin || frame >= bufferBegin + buffered) {
         source->Seek(frame);
         bufferBegin = frame;
@@ -38,11 +41,15 @@ std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
         }
     }
     const auto offset = static_cast<std::size_t>(frame - bufferBegin) * format.Channels;
+    auto& cached = recent[recentIndex];
+    recentIndex = (recentIndex + 1) % recent.size();
+    cached.Position = frame;
+    cached.Valid = true;
     if (format.Channels == 1) {
         const auto value = buffer[offset] * 0.7071067811865475244f;
-        return {value, value};
-    }
-    return {buffer[offset], buffer[offset + 1]};
+        cached.Value = {value, value};
+    } else cached.Value = {buffer[offset], buffer[offset + 1]};
+    return cached.Value;
 }
 bool Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
     if (frames && !stereo) throw FormatError("Missing voice output buffer");
