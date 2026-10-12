@@ -21,6 +21,12 @@ std::uint64_t Reader::Unsigned(std::size_t size) {
     }
     return value;
 }
+std::int64_t Reader::Signed(std::size_t size) {
+    const auto value = Unsigned(size);
+    const auto sign = std::uint64_t{1} << (size * 8 - 1);
+    if (!(value & sign)) return static_cast<std::int64_t>(value);
+    return -1 - static_cast<std::int64_t>((sign - 1) - (value - sign));
+}
 std::uint32_t Reader::Compact() {
     const auto low = static_cast<std::uint32_t>(Unsigned(2));
     if (!(low & 0x8000)) return low;

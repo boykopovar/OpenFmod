@@ -19,6 +19,7 @@ public:
     std::size_t Remaining() const;
     std::string_view Read(std::size_t size);
     std::uint64_t Unsigned(std::size_t size);
+    std::int64_t Signed(std::size_t size);
     std::uint32_t Compact();
     std::vector<std::string_view> Elements(std::optional<std::size_t> elementSize = std::nullopt);
     float Float();

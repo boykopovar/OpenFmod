@@ -14,6 +14,7 @@ add_library(OpenFmod STATIC
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
     src/Studio/Event/Model.cpp
+    src/Studio/Instrument/Settings.cpp
     src/Studio/Timeline/Model.cpp
     src/Studio/Timeline/Transition.cpp
     src/Studio/Timeline/TempoGrid.cpp

@@ -12,6 +12,7 @@ void CheckMixer();
 void CheckTimeline();
 void CheckEvent();
 void CheckAutomation();
+void CheckInstrument();
 int main() {
     CheckCatalog();
     CheckSound();
@@ -23,6 +24,7 @@ int main() {
     CheckTimeline();
     CheckEvent();
     CheckAutomation();
+    CheckInstrument();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";
