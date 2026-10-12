@@ -2,6 +2,7 @@
 #include "OpenFmod/Studio/Modulation/Mapping.hpp"
 #include "OpenFmod/Studio/Modulation/EnvelopeState.hpp"
 #include "OpenFmod/Studio/Modulation/FollowerState.hpp"
+#include "OpenFmod/Studio/Modulation/RandomState.hpp"
 #include <cmath>
 #include <stdexcept>
 void CheckModulation() {
@@ -46,6 +47,24 @@ void CheckModulation() {
     Mapping mapping({}, {{-1, -30}, {0, 0}, {1, 30}});
     if (mapping.Transform(0.5f) != 15 || mapping.Inverse(-7.5f) != -0.25f) throw std::runtime_error("Incorrect property mapping");
     if (mapping.Transform(-2) != -30 || mapping.Inverse(50) != 1) throw std::runtime_error("Mapping exceeded boundary");
+    RandomState random(12, RandomRange::Symmetric);
+    bool rejected = false;
+    try { random.GetValue(); } catch (const OpenFmod::FormatError&) { rejected = true; }
+    if (!rejected) throw std::runtime_error("Random modulation allowed an uninitialized sample");
+    random.Start(0.75f);
+    if (random.GetValue() != 3) throw std::runtime_error("Incorrect symmetric random modulation");
+    random.SetAmount(24);
+    if (random.GetValue() != 6) throw std::runtime_error("Changing amount rerolled modulation");
+    RandomState negative(30, RandomRange::Negative, &mapping);
+    negative.Start(0.5f);
+    if (negative.GetValue() != -0.5f) throw std::runtime_error("Random modulation ignored property mapping");
+    Mapping steps({}, {{0, 0}, {1, 4}});
+    RandomState discrete(1, RandomRange::Symmetric, &steps, true);
+    discrete.Start(1);
+    if (discrete.GetValue() != 0.75f) throw std::runtime_error("Discrete random range omitted its last step");
+    RandomState angular(100, RandomRange::Symmetric, nullptr, false, true);
+    angular.Start(0.75f);
+    if (std::abs(angular.GetValue() - 16.666666f) > 0.00001f) throw std::runtime_error("Incorrect angular random distribution");
     Curve curve({}, {}, {{0, 0, 0, Interpolation::Exponential}, {100, 1, 0, Interpolation::Constant}, {200, 3, 0, Interpolation::Exponential}});
     if (curve.EvaluateTick(50) != 0.5f || curve.EvaluateTick(150) != 1 || curve.EvaluateTick(200) != 3) {
         throw std::runtime_error("Incorrect timeline curve evaluation");

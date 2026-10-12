@@ -13,6 +13,7 @@ Mapping::Mapping(Bank::Guid id, std::vector<MappingPoint> points) : id(id), poin
     }
 }
 const Bank::Guid& Mapping::GetId() const { return id; }
+float Mapping::GetOutputRange() const { return points.back().Output - points.front().Output; }
 float Mapping::Transform(float value) const { return evaluate(value, false); }
 float Mapping::Inverse(float value) const { return evaluate(value, true); }
 float Mapping::evaluate(float value, bool inverse) const {

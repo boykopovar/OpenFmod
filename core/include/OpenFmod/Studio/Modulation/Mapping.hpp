@@ -10,6 +10,7 @@ class Mapping {
 public:
     Mapping(Bank::Guid id, std::vector<MappingPoint> points);
     const Bank::Guid& GetId() const;
+    float GetOutputRange() const;
     float Transform(float value) const;
     float Inverse(float value) const;
 private:
