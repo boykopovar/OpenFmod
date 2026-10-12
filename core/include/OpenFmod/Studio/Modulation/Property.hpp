@@ -6,9 +6,9 @@
 namespace OpenFmod::Studio {
 struct Property {
     std::uint32_t Id{};
-    std::uint16_t Type{};
-    std::uint16_t Flags{};
-    Bank::Guid Source{};
+    std::uint16_t Resolution{};
+    std::uint16_t ValueType{};
+    Bank::Guid MappingId{};
     std::vector<Bank::Guid> Curves;
     std::vector<Bank::Guid> Modulators;
 };

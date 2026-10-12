@@ -1,8 +1,22 @@
 #include "OpenFmod/Studio/Automation/Controller.hpp"
+#include "OpenFmod/Studio/Automation/Resolver.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckAutomation() {
     using namespace OpenFmod::Studio;
+    AutomationResolver average(Resolution::Average, AutomationType::Normal);
+    if (average.Resolve(10, {}) != 10 || average.Resolve(0, {{4, 1}, {8, 1}}) != 6
+        || average.Resolve(0, {{4, 1}, {8, 0.5f}}) != 5) throw std::runtime_error("Incorrect averaged automation");
+    AutomationResolver multiply(Resolution::Multiply, AutomationType::Normal);
+    if (multiply.Resolve(9, {{2, 1}, {3, 1}}) != 6) throw std::runtime_error("Incorrect multiplied automation");
+    AutomationResolver volume(Resolution::Sum, AutomationType::Volume);
+    if (volume.Resolve(0, {{-80, 1}, {20, 1}}) != -80) throw std::runtime_error("Silent automation contribution became audible");
+    Mapping mapping({}, {{0, -10}, {1, 10}});
+    AutomationResolver mapped(Resolution::Sum, AutomationType::Normal, &mapping);
+    if (mapped.Resolve(0, {{0.75f, 1}, {0.5f, 1}}) != 5) throw std::runtime_error("Incorrect mapped automation origin");
+    AutomationResolver replace(Resolution::Replace, AutomationType::Normal);
+    if (replace.Resolve(0, {{8, 0.5f}, {4, 1}}) != 4
+        || replace.Resolve(0, {{4, 1}, {8, 0.5f}}) != 6) throw std::runtime_error("Automation controller order was lost");
     std::string bytes(48, '\0');
     TestData::Append(bytes, 4, 4);
     const auto model = ReadController(bytes);

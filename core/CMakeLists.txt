@@ -13,6 +13,7 @@ add_library(OpenFmod STATIC
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
+    src/Studio/Automation/Resolver.cpp
     src/Studio/Event/Model.cpp
     src/Studio/Instrument/Settings.cpp
     src/Studio/Instrument/Definition.cpp
