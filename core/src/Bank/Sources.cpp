@@ -1,13 +1,5 @@
 #include "OpenFmod/Bank/Sources.hpp"
 namespace OpenFmod::Bank {
-namespace {
-std::string_view payload(std::string_view bytes, const Chunk& chunk) {
-    if (chunk.Offset > bytes.size() || chunk.Size > bytes.size() - chunk.Offset) {
-        throw FormatError("Bank chunk outside source bytes");
-    }
-    return bytes.substr(chunk.Offset, chunk.Size);
-}
-}
 const Sound::Sample& Sources::Require(const Guid& id) const {
     const auto found = Waves.find(id);
     if (found == Waves.end()) throw FormatError("Unknown wave identity");
@@ -17,7 +9,7 @@ const Sound::Sample& Sources::Require(const Guid& id) const {
 Sources ReadSources(std::string_view bytes, const Chunk& container) {
     Sources result;
     const auto& project = container.Require("LIST", "PROJ");
-    Binary::Reader ranges(payload(bytes, project.Require("SNDH")));
+    Binary::Reader ranges(project.Require("SNDH").Data(bytes));
     if (ranges.Remaining()) {
         const auto& data = container.Require("SND ");
         std::size_t previousEnd = data.Offset;
@@ -35,14 +27,11 @@ Sources ReadSources(std::string_view bytes, const Chunk& container) {
     }
     ranges.Finish();
     const auto& collection = project.Require("LIST", "WAVS");
-    if (collection.Children.empty()) return result;
-    Binary::Reader count(payload(bytes, collection.Require("LCNT")));
-    const auto expected = count.Unsigned(4);
-    count.Finish();
+    collection.ValidateCount(bytes);
     for (const auto& chunk : collection.Children) {
         if (chunk.Id == "LCNT") continue;
         if (chunk.Id != "WAV ") throw FormatError("Unexpected wave collection entry");
-        Binary::Reader reader(payload(bytes, chunk));
+        Binary::Reader reader(chunk.Data(bytes));
         const auto id = ReadGuid(reader);
         const auto size = static_cast<std::size_t>(reader.Unsigned(2));
         Binary::Reader fields(reader.Read(size));
@@ -59,7 +48,6 @@ Sources ReadSources(std::string_view bytes, const Chunk& container) {
         }
         if (!result.Waves.emplace(id, wave).second) throw FormatError("Duplicate wave identity");
     }
-    if (expected != result.Waves.size()) throw FormatError("Wave collection count mismatch");
     return result;
 }
 }

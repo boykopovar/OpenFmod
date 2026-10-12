@@ -1,5 +1,6 @@
 #include "OpenFmod/Studio/Instrument/Settings.hpp"
 #include "OpenFmod/Studio/Instrument/Definition.hpp"
+#include "OpenFmod/Studio/Instrument/Model.hpp"
 #include "../Data/Writer.hpp"
 #include <limits>
 #include <stdexcept>
@@ -46,6 +47,13 @@ void CheckInstrument() {
     if (result.LoopCount != -1 || result.Properties.at(8) != 75 || result.MaximumDelayMilliseconds != 20
         || result.SourceOffsetTicks != 4800 || result.Routing.ChannelLayout != 2 || result.MaximumInstances != 3) {
         throw std::runtime_error("Incorrect instrument settings");
+    }
+    auto complete = bytes + std::string(32, '\0');
+    OpenFmod::Bank::Chunk container{"LIST", "WAIT", 0, complete.size(), {
+        {"INST", {}, 0, bytes.size(), {}}, {"WAIB", {}, bytes.size(), 32, {}}, {"LIST", "PRPS", 0, 0, {}}}};
+    const auto instrument = OpenFmod::Studio::ReadInstrument(complete, container);
+    if (instrument.Variants || !std::holds_alternative<OpenFmod::Studio::WaveInstrument>(instrument.Definition.Source)) {
+        throw std::runtime_error("Incorrect assembled instrument");
     }
     std::string signedBytes(8, '\0');
     signedBytes.back() = static_cast<char>(0x80);

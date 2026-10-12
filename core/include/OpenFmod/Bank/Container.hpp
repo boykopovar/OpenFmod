@@ -12,6 +12,8 @@ struct Chunk {
     std::size_t Size{};
     std::vector<Chunk> Children;
     const Chunk& Require(std::string_view id, std::string_view form = {}) const;
+    std::string_view Data(std::string_view bytes) const;
+    void ValidateCount(std::string_view bytes) const;
 };
 Chunk ReadContainer(std::string_view bytes);
 }

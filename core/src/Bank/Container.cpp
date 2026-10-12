@@ -33,6 +33,18 @@ const Chunk& Chunk::Require(std::string_view id, std::string_view form) const {
     if (!found) throw FormatError("Missing bank chunk: " + std::string(id) + std::string(form));
     return *found;
 }
+std::string_view Chunk::Data(std::string_view bytes) const {
+    if (Offset > bytes.size() || Size > bytes.size() - Offset) throw FormatError("Bank chunk outside source bytes");
+    return bytes.substr(Offset, Size);
+}
+void Chunk::ValidateCount(std::string_view bytes) const {
+    if (Id != "LIST") throw FormatError("Expected counted bank list");
+    if (Children.empty()) return;
+    Binary::Reader count(Require("LCNT").Data(bytes));
+    const auto expected = count.Unsigned(4);
+    count.Finish();
+    if (expected != Children.size() - 1) throw FormatError("Bank list count mismatch");
+}
 Chunk ReadContainer(std::string_view bytes) {
     Binary::Reader reader(bytes);
     Chunk result;

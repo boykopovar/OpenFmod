@@ -12,4 +12,17 @@ Property ReadProperty(std::string_view bytes) {
     reader.Finish();
     return result;
 }
+std::map<std::uint32_t, Property> ReadProperties(std::string_view bytes, const Bank::Chunk& chunk) {
+    if (chunk.Id != "LIST" || chunk.Form != "PRPS") throw FormatError("Expected property collection");
+    chunk.ValidateCount(bytes);
+    std::map<std::uint32_t, Property> result;
+    for (const auto& child : chunk.Children) {
+        if (child.Id == "LCNT") continue;
+        if (child.Id != "PROP" || !child.Form.empty()) throw FormatError("Unexpected property collection entry");
+        auto property = ReadProperty(child.Data(bytes));
+        const auto id = property.Id;
+        if (!result.emplace(id, std::move(property)).second) throw FormatError("Duplicate property identity");
+    }
+    return result;
+}
 }
