@@ -1,9 +1,23 @@
 #include "OpenFmod/Studio/Instrument/Settings.hpp"
+#include "OpenFmod/Studio/Instrument/Definition.hpp"
 #include "../Data/Writer.hpp"
 #include <limits>
 #include <stdexcept>
 void CheckInstrument() {
     using namespace TestData;
+    std::string nested(32, '\0');
+    AppendFloat(nested, 120);
+    Append(nested, 3, 2);
+    Append(nested, 24, 2);
+    Append(nested, 2, 4);
+    nested.append(16, '\1');
+    AppendFloat(nested, 7);
+    const auto definition = OpenFmod::Studio::ReadInstrumentDefinition("EVIB", nested);
+    const auto& event = std::get<OpenFmod::Studio::EventInstrument>(definition.Source);
+    if (event.TimelinePositionMilliseconds != 120 || event.Parameters.size() != 1
+        || event.Parameters[0].Value != 7 || event.Parameters[0].PropertyId != 2) {
+        throw std::runtime_error("Incorrect nested event definition");
+    }
     std::string bytes(16, '\0');
     AppendFloat(bytes, -6);
     AppendFloat(bytes, 3);
