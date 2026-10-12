@@ -11,5 +11,15 @@ inline Guid ReadGuid(Binary::Reader& reader) {
     std::copy(bytes.begin(), bytes.end(), result.begin());
     return result;
 }
+inline std::vector<Guid> ReadGuids(Binary::Reader& reader) {
+    const auto elements = reader.Elements(16);
+    std::vector<Guid> result;
+    result.reserve(elements.size());
+    for (const auto bytes : elements) {
+        Binary::Reader entry(bytes);
+        result.push_back(ReadGuid(entry));
+    }
+    return result;
+}
 }
 #endif
