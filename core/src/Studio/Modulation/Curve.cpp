@@ -52,6 +52,7 @@ Curve::Curve(Bank::Guid id, Bank::Guid input, std::vector<CurvePoint> points)
 }
 const Bank::Guid& Curve::GetId() const { return id; }
 const Bank::Guid& Curve::GetInput() const { return input; }
+bool Curve::IsEmpty() const { return points.empty(); }
 float Curve::Evaluate(float position) const { return evaluate(position, false); }
 float Curve::EvaluateTick(std::uint32_t tick) const { return evaluate(tick, true); }
 float Curve::evaluate(double position, bool timeline) const {

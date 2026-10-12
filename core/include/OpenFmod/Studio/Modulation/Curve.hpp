@@ -15,6 +15,7 @@ public:
     Curve(Bank::Guid id, Bank::Guid input, std::vector<CurvePoint> points);
     const Bank::Guid& GetId() const;
     const Bank::Guid& GetInput() const;
+    bool IsEmpty() const;
     float Evaluate(float position) const;
     float EvaluateTick(std::uint32_t tick) const;
 private:
