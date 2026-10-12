@@ -5,10 +5,15 @@
 namespace OpenFmod::Studio {
 enum class Resolution { Minimum, Maximum, Sum, Average, Multiply, Replace };
 enum class AutomationType { Normal, Volume };
+struct ModulationValue {
+    float Value{};
+    bool IsEnvelope{};
+};
 class AutomationResolver {
 public:
     AutomationResolver(Resolution resolution, AutomationType type, const Mapping* mapping = nullptr);
     float Resolve(float base, const std::vector<AutomationValue>& values) const;
+    float Modulate(float base, const std::vector<ModulationValue>& values) const;
 private:
     float initial() const;
     float combine(float accumulated, float value) const;

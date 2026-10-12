@@ -2,6 +2,7 @@
 #include "OpenFmod/Studio/Automation/Resolver.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
+#include <limits>
 void CheckAutomation() {
     using namespace OpenFmod::Studio;
     AutomationResolver average(Resolution::Average, AutomationType::Normal);
@@ -17,6 +18,12 @@ void CheckAutomation() {
     AutomationResolver replace(Resolution::Replace, AutomationType::Normal);
     if (replace.Resolve(0, {{8, 0.5f}, {4, 1}}) != 4
         || replace.Resolve(0, {{4, 1}, {8, 0.5f}}) != 6) throw std::runtime_error("Automation controller order was lost");
+    if (multiply.Modulate(4, {{2, false}, {0.5f, true}}) != 3
+        || multiply.Modulate(4, {{0.5f, true}, {2, false}}) != 3) throw std::runtime_error("Envelope did not scale the modulated property");
+    if (mapped.Modulate(0, {{25, false}}) != 5) throw std::runtime_error("Modulation ignored mapping scale");
+    if (volume.Modulate(0, {{-80, false}, {20, false}}) != std::numeric_limits<float>::lowest()) {
+        throw std::runtime_error("Silent modulation contribution became audible");
+    }
     std::string bytes(48, '\0');
     TestData::Append(bytes, 4, 4);
     const auto model = ReadController(bytes);

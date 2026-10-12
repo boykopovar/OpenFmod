@@ -69,4 +69,26 @@ float AutomationResolver::Resolve(float base, const std::vector<AutomationValue>
     if (type == AutomationType::Normal && mapping) result = mapping->Transform(result);
     return result;
 }
+float AutomationResolver::Modulate(float base, const std::vector<ModulationValue>& values) const {
+    if (!std::isfinite(base)) throw FormatError("Nonfinite modulation base value");
+    auto sum = type == AutomationType::Normal && mapping ? mapping->Inverse(base) : base;
+    float multiplier = 1;
+    for (const auto& entry : values) {
+        if (!std::isfinite(entry.Value)) throw FormatError("Nonfinite modulation contribution");
+        auto value = entry.Value;
+        if (type == AutomationType::Volume) {
+            if (mapping) value = mapping->Transform(value);
+            sum = sum == std::numeric_limits<float>::lowest() || value <= -80
+                ? std::numeric_limits<float>::lowest() : sum + value;
+        } else {
+            if (mapping) value *= mapping->GetInputRange() * 0.01f;
+            if (entry.IsEnvelope && resolution == Resolution::Multiply) multiplier *= value;
+            else sum += value;
+        }
+    }
+    auto result = multiplier * sum;
+    if (!std::isfinite(result)) throw FormatError("Modulation result overflow");
+    if (type == AutomationType::Normal && mapping) result = mapping->Transform(result);
+    return result;
+}
 }
