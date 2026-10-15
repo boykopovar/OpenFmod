@@ -27,6 +27,7 @@ add_library(OpenFmod STATIC
     src/Studio/Modulation/EnvelopeState.cpp
     src/Studio/Modulation/FollowerState.cpp
     src/Studio/Modulation/RandomState.cpp
+    src/Studio/Modulation/SlewState.cpp
     src/Studio/Modulation/Curve.cpp
     src/Studio/Modulation/Mapping.cpp
 )

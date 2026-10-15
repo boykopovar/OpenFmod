@@ -1,8 +1,26 @@
 #include "OpenFmod/Studio/Parameter/Model.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
+#include "OpenFmod/Studio/Modulation/SlewState.hpp"
 void CheckParameter() {
     using namespace TestData;
+    OpenFmod::Studio::SlewState slew(2, 1);
+    slew.Reset(0);
+    if (slew.Process(10, 1) != 2 || slew.Process(0, 1) != 1 || slew.Process(0, 4) != 0) {
+        throw std::runtime_error("Incorrect directional slew speed");
+    }
+    OpenFmod::Studio::SlewState discrete(1, 1, nullptr, true);
+    discrete.Reset(0);
+    if (discrete.Process(2, 0.5) != 0 || discrete.Process(2, 0.5) != 1
+        || discrete.Process(0, 0.5) != 1 || discrete.Process(0, 0.5) != 0) {
+        throw std::runtime_error("Slew lost fractional progress");
+    }
+    OpenFmod::Studio::Mapping mapping({}, {{0, 0}, {0.5f, 2}, {1, 10}});
+    OpenFmod::Studio::SlewState mapped(0.5f, 1, &mapping);
+    mapped.Reset(0);
+    if (mapped.Process(10, 1) != 2 || mapped.Process(10, 1) != 10) {
+        throw std::runtime_error("Slew ignored property mapping");
+    }
     std::string bytes(16, '\0');
     Append(bytes, 4, 4);
     Append(bytes, 0, 4);
