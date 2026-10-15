@@ -2,12 +2,8 @@
 #define OPENFMOD_STUDIO_INSTRUMENT_SETTINGS_HPP
 #include "OpenFmod/Studio/Condition.hpp"
 #include <map>
+#include "OpenFmod/Studio/Bus/Routing.hpp"
 namespace OpenFmod::Studio {
-struct InstrumentRouting {
-    Bank::Guid Bus{};
-    std::uint32_t ChannelLayout{};
-    std::uint32_t Flags{};
-};
 struct InstrumentSettings {
     Bank::Guid Owner{};
     std::map<std::uint32_t, float> Properties;
@@ -21,7 +17,7 @@ struct InstrumentSettings {
     float AutoPitchMaximum{};
     float AutoPitchMinimum{};
     std::uint32_t MaximumInstances{};
-    InstrumentRouting Routing;
+    Studio::Routing Routing;
     std::uint32_t StealingMode{};
     std::uint32_t SourceOffsetTicks{};
     Condition Trigger{std::string_view{}};

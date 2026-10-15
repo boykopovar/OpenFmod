@@ -19,12 +19,7 @@ InstrumentSettings ReadInstrumentSettings(std::string_view bytes) {
     result.AutoPitchMaximum = reader.Float();
     result.Properties.emplace(9, reader.Float());
     result.MaximumInstances = static_cast<std::uint32_t>(reader.Unsigned(4));
-    const auto routingSize = static_cast<std::size_t>(reader.Unsigned(2));
-    Binary::Reader routing(reader.Read(routingSize));
-    result.Routing.Bus = Bank::ReadGuid(routing);
-    result.Routing.ChannelLayout = static_cast<std::uint32_t>(routing.Unsigned(4));
-    result.Routing.Flags = static_cast<std::uint32_t>(routing.Unsigned(4));
-    routing.Finish();
+    result.Routing = ReadRouting(reader);
     result.StealingMode = static_cast<std::uint32_t>(reader.Unsigned(4));
     result.SourceOffsetTicks = static_cast<std::uint32_t>(reader.Unsigned(4));
     result.Properties.emplace(11, reader.Float());
