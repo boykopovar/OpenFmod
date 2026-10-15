@@ -1,7 +1,7 @@
 #ifndef OPENFMOD_STUDIO_BUS_MODEL_HPP
 #define OPENFMOD_STUDIO_BUS_MODEL_HPP
 #include "OpenFmod/Studio/Bus/Routing.hpp"
-#include "OpenFmod/Studio/Modulation/Property.hpp"
+#include "OpenFmod/Studio/Bus/Controls.hpp"
 namespace OpenFmod::Studio {
 enum class BusKind { Input, Group, Master, Return };
 struct BusEffect {
@@ -16,9 +16,7 @@ struct Bus {
     std::uint32_t ChannelLayout{};
     std::vector<BusEffect> PreEffects;
     std::vector<BusEffect> PostEffects;
-    float VolumeDecibels{};
-    float PitchSemitones{};
-    std::vector<Bank::Guid> VolumeControls;
+    MixControls Levels;
     std::int32_t MaximumInstances{};
     std::int32_t StealingMode{};
     std::int32_t ChannelIndex{};

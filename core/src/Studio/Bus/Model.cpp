@@ -1,5 +1,4 @@
 #include "OpenFmod/Studio/Bus/Model.hpp"
-#include <cmath>
 namespace OpenFmod::Studio {
 Routing ReadRouting(Binary::Reader& reader) {
     Binary::Reader data(reader.Read(static_cast<std::size_t>(reader.Unsigned(2))));
@@ -43,11 +42,7 @@ Bus ReadBus(std::string_view bytes, const Bank::Chunk& chunk) {
     result.ChannelLayout = static_cast<std::uint32_t>(reader.Unsigned(4));
     result.PreEffects = readEffects(reader);
     result.PostEffects = readEffects(reader);
-    Binary::Reader levels(reader.Read(static_cast<std::size_t>(reader.Unsigned(2))));
-    result.VolumeDecibels = levels.Float();
-    result.PitchSemitones = levels.Float();
-    levels.Finish();
-    result.VolumeControls = Bank::ReadGuids(reader);
+    result.Levels = ReadMixControls(reader);
     result.MaximumInstances = static_cast<std::int32_t>(reader.Signed(4));
     result.StealingMode = static_cast<std::int32_t>(reader.Signed(4));
     readLayouts(reader, result.PreEffects);
@@ -56,8 +51,7 @@ Bus ReadBus(std::string_view bytes, const Bank::Chunk& chunk) {
     result.ChannelOrder = static_cast<std::uint32_t>(reader.Unsigned(4));
     reader.Finish();
     result.Properties = ReadProperties(bytes, chunk.Require("LIST", "PRPS"));
-    if (!std::isfinite(result.VolumeDecibels) || !std::isfinite(result.PitchSemitones)
-        || result.MaximumInstances < 1 || result.StealingMode < 0 || result.StealingMode > 4
+    if (result.MaximumInstances < 1 || result.StealingMode < 0 || result.StealingMode > 4
         || result.ChannelOrder > 8) throw FormatError("Invalid bus settings");
     return result;
 }
