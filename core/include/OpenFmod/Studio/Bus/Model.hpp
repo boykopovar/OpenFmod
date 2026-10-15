@@ -6,7 +6,7 @@ namespace OpenFmod::Studio {
 enum class BusKind { Input, Group, Master, Return };
 struct BusEffect {
     Bank::Guid Id{};
-    std::uint32_t Flags{};
+    std::uint32_t ChannelLayout{};
 };
 struct Bus {
     Bank::Guid Id{};

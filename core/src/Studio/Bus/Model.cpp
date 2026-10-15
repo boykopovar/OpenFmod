@@ -16,12 +16,12 @@ std::vector<BusEffect> readEffects(Binary::Reader& reader) {
     for (const auto& id : Bank::ReadGuids(reader)) result.push_back({id, 0});
     return result;
 }
-void readFlags(Binary::Reader& reader, std::vector<BusEffect>& effects) {
+void readLayouts(Binary::Reader& reader, std::vector<BusEffect>& effects) {
     const auto values = reader.Elements(4);
-    if (values.size() != effects.size()) throw FormatError("Bus effect flags count mismatch");
+    if (values.size() != effects.size()) throw FormatError("Bus effect layouts count mismatch");
     for (std::size_t index = 0; index < values.size(); ++index) {
         Binary::Reader data(values[index]);
-        effects[index].Flags = static_cast<std::uint32_t>(data.Unsigned(4));
+        effects[index].ChannelLayout = static_cast<std::uint32_t>(data.Unsigned(4));
     }
 }
 }
@@ -50,8 +50,8 @@ Bus ReadBus(std::string_view bytes, const Bank::Chunk& chunk) {
     result.VolumeControls = Bank::ReadGuids(reader);
     result.MaximumInstances = static_cast<std::int32_t>(reader.Signed(4));
     result.StealingMode = static_cast<std::int32_t>(reader.Signed(4));
-    readFlags(reader, result.PreEffects);
-    readFlags(reader, result.PostEffects);
+    readLayouts(reader, result.PreEffects);
+    readLayouts(reader, result.PostEffects);
     result.ChannelIndex = static_cast<std::int32_t>(reader.Signed(4));
     result.ChannelOrder = static_cast<std::uint32_t>(reader.Unsigned(4));
     reader.Finish();

@@ -14,6 +14,7 @@ void CheckEvent();
 void CheckAutomation();
 void CheckInstrument();
 void CheckParameter();
+void CheckEffect();
 int main() {
     CheckCatalog();
     CheckSound();
@@ -27,6 +28,7 @@ int main() {
     CheckAutomation();
     CheckInstrument();
     CheckParameter();
+    CheckEffect();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";
