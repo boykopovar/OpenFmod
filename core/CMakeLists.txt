@@ -11,6 +11,8 @@ add_library(OpenFmod STATIC
     src/Audio/Voice.cpp
     src/Audio/Mixer.cpp
     src/Audio/Graph.cpp
+    src/Audio/Filters/Biquad.cpp
+    src/Audio/Filters/ThreeBandEq.cpp
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
