@@ -10,6 +10,7 @@ add_library(OpenFmod STATIC
     src/Audio/VorbisSource.cpp
     src/Audio/Voice.cpp
     src/Audio/Mixer.cpp
+    src/Audio/Graph.cpp
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp

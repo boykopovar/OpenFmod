@@ -1,8 +1,15 @@
 #include "OpenFmod/Audio/Mixer.hpp"
+#include "OpenFmod/Audio/Graph.hpp"
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
 namespace {
+class Offset final : public OpenFmod::Audio::IAudioProcessor {
+public:
+    void Process(float* stereo, std::size_t frames) override {
+        for (std::size_t index = 0; index < frames * 2; ++index) stereo[index] += 1;
+    }
+};
 class Signal final : public OpenFmod::Audio::IAudioSource {
 public:
     explicit Signal(std::vector<float> data = {0, 0, 1, 2, 3, 4, 5, 6}, std::size_t* rewinds = nullptr)
@@ -27,6 +34,22 @@ private:
 }
 void CheckMixer() {
     using namespace OpenFmod::Audio;
+    Graph graph(4);
+    const auto group = graph.AddBus(0);
+    const auto child = graph.AddBus(group);
+    graph.SetGain(group, 0.5f);
+    graph.SetGain(child, 0.25f);
+    graph.GetMixer(child).Play(std::make_unique<Signal>(std::vector<float>(8, 1)));
+    graph.GetMixer(group).Play(std::make_unique<Signal>(std::vector<float>(8, 1)));
+    std::vector<float> graphOutput(8);
+    graph.Render(graphOutput.data(), 4);
+    if (graphOutput != std::vector<float>(8, 0.625f)) throw std::runtime_error("Incorrect hierarchical bus mixing");
+    graph.AddProcessor(child, ProcessingStage::BeforeFader, std::make_unique<Offset>());
+    graph.AddProcessor(child, ProcessingStage::AfterFader, std::make_unique<Offset>());
+    graph.Render(graphOutput.data(), 4);
+    if (graphOutput != std::vector<float>(8, 0.625f)) throw std::runtime_error("Incorrect bus processor order");
+    graph.RemoveBus(child);
+    graph.RemoveBus(group);
     Mixer mixer(4);
     VoiceSettings settings;
     settings.DelayFrames = 2;
