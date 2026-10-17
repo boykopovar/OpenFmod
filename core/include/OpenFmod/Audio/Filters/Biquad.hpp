@@ -5,6 +5,7 @@
 namespace OpenFmod::Audio {
 using BiquadCoefficients = std::array<float, 5>;
 BiquadCoefficients DesignPassFilter(float sampleRate, float frequency, float quality, bool highPass);
+BiquadCoefficients DesignPassFilterAtAngle(float angle, float quality, bool highPass);
 class Biquad {
 public:
     void Configure(const BiquadCoefficients& coefficients, std::uint32_t rampFrames = 0);

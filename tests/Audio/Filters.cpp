@@ -1,4 +1,5 @@
 #include "OpenFmod/Audio/Filters/ThreeBandEq.hpp"
+#include "OpenFmod/Audio/Filters/MultibandEq.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
 #include <algorithm>
 #include <cmath>
@@ -44,6 +45,25 @@ void CheckFilters() {
         if (std::any_of(a.begin() + 512, a.end(), [](float value) { return value != 0; })) {
             throw std::runtime_error("Muted equalizer bands leak audio");
         }
+    }
+    for (int type = 0; type <= static_cast<int>(FilterType::HighPass6); ++type) {
+        MultibandEq whole(48000), split(48000);
+        EqualizerBand band{static_cast<FilterType>(type), 2300, 1.2f, -7};
+        whole.Configure(0, band);
+        split.Configure(0, band);
+        auto a = signal(), b = a;
+        whole.Process(a.data(), 6000);
+        split.Process(b.data(), 137);
+        split.Process(b.data() + 274, 5863);
+        if (a != b) throw std::runtime_error("Multiband equalizer depends on block boundaries");
+        band.Frequency = 4100;
+        whole.Configure(0, band, 256);
+        split.Configure(0, band, 256);
+        a = signal();
+        b = a;
+        whole.Process(a.data(), 6000);
+        for (std::size_t i = 0; i < 6000; ++i) split.Process(b.data() + i * 2, 1);
+        if (a != b) throw std::runtime_error("Multiband coefficient ramp depends on block boundaries");
     }
     ThreeBandEq isolated(48000);
     auto stereo = signal();

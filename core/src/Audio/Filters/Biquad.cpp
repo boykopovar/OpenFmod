@@ -8,6 +8,11 @@ BiquadCoefficients DesignPassFilter(float sampleRate, float frequency, float qua
         || !std::isfinite(quality) || quality <= 0) throw FormatError("Invalid pass filter settings");
     frequency = std::min(std::clamp(frequency, 10.0f, 22000.0f), sampleRate * 0.49f);
     const float angle = frequency * 6.2831853071795864769f / sampleRate;
+    return DesignPassFilterAtAngle(angle, quality, highPass);
+}
+BiquadCoefficients DesignPassFilterAtAngle(float angle, float quality, bool highPass) {
+    if (!std::isfinite(angle) || angle <= 0 || angle >= 3.14159265358979323846f
+        || !std::isfinite(quality) || quality <= 0) throw FormatError("Invalid normalized pass filter settings");
     const float cosine = std::cos(angle);
     const float alpha = std::sin(angle) * (0.5f / quality);
     const float scale = 1 / (1 + alpha);
