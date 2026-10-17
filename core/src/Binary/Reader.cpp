@@ -53,6 +53,11 @@ float Reader::Float() {
     std::memcpy(&result, &bits, sizeof(result));
     return result;
 }
+bool Reader::Boolean() {
+    const auto value = Unsigned(1);
+    if (value > 1) throw FormatError("Invalid boolean at byte " + std::to_string(position - 1));
+    return value != 0;
+}
 void Reader::Finish() const {
     if (Remaining()) throw FormatError("Unexpected trailing data at byte " + std::to_string(position));
 }

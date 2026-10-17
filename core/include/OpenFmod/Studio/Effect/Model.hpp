@@ -12,6 +12,15 @@ struct Effect {
     std::vector<EffectParameter> Parameters;
     std::map<std::uint32_t, Property> Properties;
 };
+struct Sidechain {
+    Bank::Guid Id{};
+    bool LegacyFlag{};
+    std::vector<Bank::Guid> Effects;
+    std::vector<Bank::Guid> Followers;
+    float GainDecibels{};
+    std::map<std::uint32_t, Property> Properties;
+};
+Sidechain ReadSidechain(std::string_view bytes, const Bank::Chunk& chunk);
 Effect ReadEffect(std::string_view bytes, const Bank::Chunk& chunk);
 }
 #endif

@@ -23,6 +23,7 @@ public:
     std::uint32_t Compact();
     std::vector<std::string_view> Elements(std::optional<std::size_t> elementSize = std::nullopt);
     float Float();
+    bool Boolean();
     void Finish() const;
 private:
     std::string_view bytes;
