@@ -10,6 +10,7 @@ void CheckModulation();
 void CheckCondition();
 void CheckMixer();
 void CheckFilters();
+void CheckDynamics();
 void CheckTimeline();
 void CheckEvent();
 void CheckAutomation();
@@ -25,6 +26,7 @@ int main() {
     CheckCondition();
     CheckMixer();
     CheckFilters();
+    CheckDynamics();
     CheckTimeline();
     CheckEvent();
     CheckAutomation();
@@ -43,4 +45,5 @@ int main() {
     catch (const OpenFmod::FormatError&) { return 0; }
     throw std::runtime_error("Truncated bank accepted");
 }
+
 

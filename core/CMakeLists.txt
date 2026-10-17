@@ -11,6 +11,7 @@ add_library(OpenFmod STATIC
     src/Audio/Voice.cpp
     src/Audio/Mixer.cpp
     src/Audio/Graph.cpp
+    src/Audio/Dynamics/Compressor.cpp
     src/Audio/Filters/Biquad.cpp
     src/Audio/Filters/ThreeBandEq.cpp
     src/Audio/Filters/EqualizerDesign.cpp
@@ -50,4 +51,5 @@ if(MSVC)
 else()
     target_compile_options(OpenFmod PRIVATE -Wall -Wextra -Wpedantic -pedantic-errors)
 endif()
+
 
