@@ -21,4 +21,14 @@ Transition ReadTransition(std::string_view bytes) {
     reader.Finish();
     return result;
 }
+Transition ReadTransition(std::string_view bytes, const Bank::Chunk& chunk) {
+    if (chunk.Id != "LIST" || chunk.Form != "TRAN" || chunk.Children.size() != 2) {
+        throw FormatError("Invalid timeline transition container");
+    }
+    auto result = ReadTransition(chunk.Require("TRNB").Data(bytes));
+    const auto sequence = chunk.Require("TRTL").Data(bytes);
+    if (!sequence.empty()) result.Sequence = ReadTransitionSequence(sequence);
+    return result;
+}
+
 }

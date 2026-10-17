@@ -6,27 +6,12 @@ void TempoMarker::Validate() const {
         throw FormatError("Invalid timeline tempo marker");
     }
 }
-namespace {
-std::vector<ScheduledInstrument> readInstruments(Binary::Reader& reader) {
-    std::vector<ScheduledInstrument> result;
-    for (const auto bytes : reader.Elements(24)) {
-        Binary::Reader entry(bytes);
-        ScheduledInstrument instrument;
-        instrument.Instrument = Bank::ReadGuid(entry);
-        instrument.Start = static_cast<std::uint32_t>(entry.Unsigned(4));
-        instrument.Duration = static_cast<std::uint32_t>(entry.Unsigned(4));
-        entry.Finish();
-        result.push_back(instrument);
-    }
-    return result;
-}
-}
 Timeline ReadTimeline(std::string_view bytes) {
     Binary::Reader reader(bytes);
     Timeline result;
     result.Id = Bank::ReadGuid(reader);
-    result.Triggered = readInstruments(reader);
-    result.TimeLocked = readInstruments(reader);
+    result.Triggered = ReadSchedule(reader);
+    result.TimeLocked = ReadSchedule(reader);
     for (const auto data : reader.Elements()) {
         Binary::Reader entry(data);
         const auto position = static_cast<std::uint32_t>(entry.Unsigned(4));

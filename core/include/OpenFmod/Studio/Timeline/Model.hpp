@@ -1,13 +1,9 @@
 #ifndef OPENFMOD_STUDIO_TIMELINE_MODEL_HPP
 #define OPENFMOD_STUDIO_TIMELINE_MODEL_HPP
 #include "OpenFmod/Studio/Condition.hpp"
+#include "OpenFmod/Studio/Timeline/Sequence.hpp"
 #include <string>
 namespace OpenFmod::Studio {
-struct ScheduledInstrument {
-    Bank::Guid Instrument{};
-    std::uint32_t Start{};
-    std::uint32_t Duration{};
-};
 struct SustainPoint {
     std::uint32_t Position{};
     Condition Trigger;
