@@ -60,55 +60,67 @@ Project ReadProject(std::string bytes) {
             throw FormatError("Unexpected or duplicate project collection: " + collection.Form);
         }
         const auto& form = collection.Form;
-        if (form == "WAVS") continue;
+        if (form == "WAVS") {
+            for (const auto& child : collection.Children) {
+                if (child.Id == "LCNT") continue;
+                Binary::Reader reader(child.Data(data));
+                const auto id = Bank::ReadGuid(reader);
+                if (!result.EncodedObjects.emplace(ResourceKey{typeid(Sound::Sample), id}, child.Data(data)).second) throw FormatError("Duplicate wave object identity");
+            }
+            continue;
+        }
         visitCollection(data, collection, [&](const Bank::Chunk& child) {
+            const auto store = [&](auto& objects, Bank::Guid id, auto value) {
+                insert(objects, id, std::move(value));
+                if (!result.EncodedObjects.emplace(ResourceKey{typeid(value), id}, child.Data(data)).second) throw FormatError("Conflicting project object identity");
+            };
             if (form == "IBSS" || form == "GBSS" || form == "MBSS" || form == "RBSS") {
                 auto value = ReadBus(data, child);
-                insert(result.Buses, value.Id, std::move(value));
+                store(result.Buses, value.Id, std::move(value));
             } else if (form == "EVTS") {
                 auto value = readPropertyModel(data, child, "EVNT", "EVTB", ReadEvent);
-                insert(result.Events, value.Definition.Id, std::move(value));
+                store(result.Events, value.Definition.Id, std::move(value));
             } else if (form == "MODS") {
                 auto value = readPropertyModel(data, child, "MODU", "MODB", ReadModulation);
-                insert(result.Modulators, value.Definition.Id, std::move(value));
+                store(result.Modulators, value.Definition.Id, std::move(value));
             } else if (form == "TLNS") {
                 auto value = readTimeline(data, child);
-                insert(result.Timelines, value.Definition.Id, std::move(value));
+                store(result.Timelines, value.Definition.Id, std::move(value));
             } else if (form == "MUIS" || form == "WAIS" || form == "SLNS" || form == "EVIS" || form == "PRIS" || form == "CMDS") {
                 auto value = ReadInstrument(data, child);
-                insert(result.Instruments, value.Definition.Id, std::move(value));
+                store(result.Instruments, value.Definition.Id, std::move(value));
             } else if (form == "BEFX") {
                 auto value = ReadEffect(data, child);
-                insert(result.Effects, value.Id, std::move(value));
+                store(result.Effects, value.Id, std::move(value));
             } else if (form == "SCFX") {
                 auto value = ReadSidechain(data, child);
-                insert(result.Sidechains, value.Id, std::move(value));
+                store(result.Sidechains, value.Id, std::move(value));
             } else if (form == "SNAS") {
                 auto value = ReadSnapshot(data, child);
-                insert(result.Snapshots, value.Id, std::move(value));
+                store(result.Snapshots, value.Id, std::move(value));
             } else if (form == "VCAS") {
                 auto value = ReadVolumeControl(data, child);
-                insert(result.VolumeControls, value.Id, std::move(value));
+                store(result.VolumeControls, value.Id, std::move(value));
             } else if (form == "PRMS") {
                 auto value = ReadParameter(data, child, result.Version);
-                insert(result.Parameters, value.Id, std::move(value));
+                store(result.Parameters, value.Id, std::move(value));
             } else if (form == "PMLS") {
                 auto value = ReadParameterLayout(data, child);
-                insert(result.ParameterLayouts, value.Id, std::move(value));
+                store(result.ParameterLayouts, value.Id, std::move(value));
             } else if (form == "CTRS") {
                 if (child.Id != "CTRL") throw FormatError("Invalid project controller");
                 auto value = ReadController(child.Data(data));
-                insert(result.Controllers, value.Id, std::move(value));
+                store(result.Controllers, value.Id, std::move(value));
             } else if (form == "CRVS") {
                 if (child.Id != "CURV") throw FormatError("Invalid project curve");
                 auto value = ReadCurve(child.Data(data));
                 const auto id = value.GetId();
-                insert(result.Curves, id, std::move(value));
+                store(result.Curves, id, std::move(value));
             } else if (form == "MPGS") {
                 if (child.Id != "MAP ") throw FormatError("Invalid project mapping");
                 auto value = ReadMapping(child.Data(data));
                 const auto id = value.GetId();
-                insert(result.Mappings, id, std::move(value));
+                store(result.Mappings, id, std::move(value));
             } else throw FormatError("Unsupported nonempty project collection: " + form);
         });
     }

@@ -14,7 +14,9 @@
 #include "OpenFmod/Studio/Timeline/Model.hpp"
 #include "OpenFmod/Studio/Timeline/Transition.hpp"
 #include <memory>
+#include <typeindex>
 namespace OpenFmod::Studio {
+using ResourceKey = std::pair<std::type_index, Bank::Guid>;
 template<class TDefinition>
 struct PropertyModel {
     TDefinition Definition;
@@ -31,6 +33,7 @@ struct Project {
     Bank::Guid Id{};
     std::uint32_t Version{};
     Bank::Sources Sources;
+    std::map<ResourceKey, std::string_view> EncodedObjects;
     std::vector<Bank::CatalogEntry> Catalog;
     std::map<Bank::Guid, PropertyModel<Event>> Events;
     std::map<Bank::Guid, TimelineResource> Timelines;

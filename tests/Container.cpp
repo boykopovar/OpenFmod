@@ -18,6 +18,7 @@ void CheckInstrument();
 void CheckParameter();
 void CheckEffect();
 void CheckSnapshot();
+void CheckProject();
 int main() {
     CheckCatalog();
     CheckSound();
@@ -35,6 +36,7 @@ int main() {
     CheckParameter();
     CheckEffect();
     CheckSnapshot();
+    CheckProject();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";
@@ -47,6 +49,7 @@ int main() {
     catch (const OpenFmod::FormatError&) { return 0; }
     throw std::runtime_error("Truncated bank accepted");
 }
+
 
 
 
