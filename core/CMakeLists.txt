@@ -11,6 +11,7 @@ add_library(OpenFmod STATIC
     src/Audio/Voice.cpp
     src/Audio/Mixer.cpp
     src/Audio/Graph.cpp
+    src/Audio/Spatial/Projection.cpp
     src/Audio/Reverb/Reverb.cpp
     src/Audio/Reverb/Design.cpp
     src/Audio/Reverb/Settings.cpp
