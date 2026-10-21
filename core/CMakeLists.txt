@@ -16,6 +16,7 @@ add_library(OpenFmod STATIC
     src/Audio/Filters/ThreeBandEq.cpp
     src/Audio/Filters/EqualizerDesign.cpp
     src/Audio/Filters/MultibandEq.cpp
+    src/Studio/Project/Model.cpp
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
@@ -54,6 +55,7 @@ if(MSVC)
 else()
     target_compile_options(OpenFmod PRIVATE -Wall -Wextra -Wpedantic -pedantic-errors)
 endif()
+
 
 
 
