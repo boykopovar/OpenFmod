@@ -11,6 +11,7 @@ void CheckCondition();
 void CheckMixer();
 void CheckFilters();
 void CheckDynamics();
+void CheckReverb();
 void CheckTimeline();
 void CheckEvent();
 void CheckAutomation();
@@ -29,6 +30,7 @@ int main() {
     CheckMixer();
     CheckFilters();
     CheckDynamics();
+    CheckReverb();
     CheckTimeline();
     CheckEvent();
     CheckAutomation();
