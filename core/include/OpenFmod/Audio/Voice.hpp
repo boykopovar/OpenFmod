@@ -8,6 +8,7 @@ struct VoiceSettings {
     float Gain{1};
     float Pitch{1};
     std::uint64_t DelayFrames{};
+    std::uint64_t StartFrame{};
     std::uint64_t LoopBegin{};
     std::uint64_t LoopEnd{};
     std::int32_t Repeats{};

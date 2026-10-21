@@ -87,6 +87,14 @@ void CheckMixer() {
     if (!mixer.IsPlaying(loop) || !mixer.Stop(loop) || mixer.IsPlaying(loop)) throw std::runtime_error("Loop could not be stopped");
     mixer.Render(result.data(), 8);
     if (std::any_of(result.begin(), result.end(), [](float value) { return value != 0; })) throw std::runtime_error("Stopped voice emitted audio");
+    settings = {};
+    settings.StartFrame = 2;
+    mixer.SetGain(1);
+    const auto offset = mixer.Play(std::make_unique<Signal>(), settings);
+    mixer.Render(result.data(), 2);
+    if (result[0] != 3 || result[1] != 4 || result[2] != 5 || result[3] != 6 || mixer.IsPlaying(offset)) {
+        throw std::runtime_error("Incorrect source offset playback");
+    }
     std::size_t rewinds = 0;
     settings = {};
     settings.Pitch = 0.25f;

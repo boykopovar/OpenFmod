@@ -16,7 +16,9 @@ Voice::Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::
     rateRatio = static_cast<double>(format.Rate) / outputRate;
     SetGain(settings.Gain);
     SetPitch(settings.Pitch);
-    this->source->Seek(0);
+    if (settings.StartFrame > format.Frames) throw FormatError("Voice start exceeds sample duration");
+    position = static_cast<double>(settings.StartFrame);
+    this->source->Seek(settings.StartFrame);
 }
 void Voice::SetGain(float value) {
     if (!std::isfinite(value) || value < 0) throw FormatError("Invalid voice gain");

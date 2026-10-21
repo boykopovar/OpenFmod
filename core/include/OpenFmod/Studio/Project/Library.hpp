@@ -16,6 +16,11 @@ public:
         return requireEntry(ResourceKey{typeid(TValue), id}).Owner;
     }
     template<class TValue>
+    std::shared_ptr<const TValue> Retain(const Bank::Guid& id) const {
+        const auto& value = Require<TValue>(id);
+        return std::shared_ptr<const TValue>(GetOwner<TValue>(id), &value);
+    }
+    template<class TValue>
     const TValue& Require(const Bank::Guid& id) const {
         const auto& entry = requireEntry(ResourceKey{typeid(TValue), id});
         const auto* value = std::get_if<const TValue*>(&entry.Value);

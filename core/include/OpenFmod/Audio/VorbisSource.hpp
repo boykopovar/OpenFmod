@@ -5,12 +5,12 @@
 namespace OpenFmod::Audio {
 class VorbisSource final : public IAudioSource {
 public:
-    VorbisSource(Sound::Sample sample, std::shared_ptr<Sound::Vorbis::SetupRegistry> registry);
+    VorbisSource(std::shared_ptr<const Sound::Sample> sample, std::shared_ptr<Sound::Vorbis::SetupRegistry> registry);
     Format GetFormat() const override;
     std::size_t Read(float* output, std::size_t frames) override;
     void Seek(std::uint64_t frame) override;
 private:
-    Sound::Sample sample;
+    std::shared_ptr<const Sound::Sample> sample;
     std::shared_ptr<Sound::Vorbis::SetupRegistry> registry;
     std::unique_ptr<Sound::Vorbis::Decoder> decoder;
     std::vector<float> discard;

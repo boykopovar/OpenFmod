@@ -45,9 +45,9 @@ void CheckProject() {
     if (library.Require<Curve>(id).Evaluate(0) != 3 || library.Require<Controller>(id).CurveId != id) {
         throw std::runtime_error("Resource identities must be scoped by type");
     }
-    const auto retained = library.GetOwner<Curve>(id);
+    const auto retained = library.Retain<Curve>(id);
     library.Unload(first);
-    if (library.Require<Curve>(id).Evaluate(0) != 3 || retained->Curves.at(id).Evaluate(0) != 3) {
+    if (library.Require<Curve>(id).Evaluate(0) != 3 || retained->Evaluate(0) != 3) {
         throw std::runtime_error("Unloading a shared resource invalidated its owners");
     }
     bool rejected = false;
@@ -57,6 +57,7 @@ void CheckProject() {
         throw std::runtime_error("Conflicting bank load changed the resource library");
     }
     library.Unload(second);
+    if (retained->Evaluate(0) != 3) throw std::runtime_error("Active resource did not survive bank unload");
     try { library.Require<Curve>(id); }
     catch (const OpenFmod::FormatError&) { return; }
     throw std::runtime_error("Unloaded resource remains available");
