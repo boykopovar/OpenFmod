@@ -1,8 +1,32 @@
-#include "OpenFmod/Studio/Effect/Model.hpp"
+#include "OpenFmod/Studio/Effect/Processor.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckEffect() {
     using namespace TestData;
+    OpenFmod::Studio::Effect compressor;
+    compressor.Type = 18;
+    compressor.Parameters = {0.0f, 2.5f, 20.0f, 200.0f, 0.0f, std::string{}, true};
+    OpenFmod::Studio::EffectProcessor processor(compressor, 48000);
+    processor.SetParameter(4, 6.0f);
+    std::array<float, 2> signal{0.01f, 0.01f};
+    processor.Process(signal.data(), 1);
+    if (signal[0] < 0.019f || signal[0] > 0.021f) throw std::runtime_error("Effect parameter was not applied");
+    bool rejected = false;
+    try { processor.SetParameter(4, 100.0f); }
+    catch (const OpenFmod::FormatError&) { rejected = true; }
+    if (!rejected) throw std::runtime_error("Invalid effect update accepted");
+    processor.SetBypassed(true);
+    signal = {0.01f, 0.01f};
+    processor.Process(signal.data(), 1);
+    if (signal[0] != 0.01f || signal[1] != 0.01f) throw std::runtime_error("Bypassed effect changed signal");
+    processor.SetBypassed(false);
+    processor.SetParameter(5, std::string("\1\0\0\0", 4));
+    rejected = false;
+    try { processor.Process(signal.data(), 1); }
+    catch (const OpenFmod::FormatError&) { rejected = true; }
+    if (!rejected) throw std::runtime_error("Sidechain compressor silently used its input");
+    const std::array<float, 2> sidechain{};
+    processor.ProcessWithSidechain(signal.data(), 1, sidechain.data(), 2);
     std::string bytes(16, '\0');
     Append(bytes, 18, 4);
     Append(bytes, 0, 1);

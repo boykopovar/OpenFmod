@@ -26,6 +26,8 @@ add_library(OpenFmod STATIC
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
     src/Studio/Automation/Resolver.cpp
+    src/Studio/Effect/Configuration.cpp
+    src/Studio/Effect/Processor.cpp
     src/Studio/Effect/Model.cpp
     src/Studio/Snapshot/Model.cpp
     src/Studio/Snapshot/Resolver.cpp
