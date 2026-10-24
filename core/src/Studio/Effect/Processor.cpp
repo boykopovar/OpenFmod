@@ -1,5 +1,7 @@
 #include "OpenFmod/Studio/Effect/Processor.hpp"
 #include <type_traits>
+#include <algorithm>
+#include <limits>
 namespace OpenFmod::Studio {
 EffectProcessor::Unit EffectProcessor::create(const Effect& effect, std::uint32_t sampleRate) {
     switch (effect.Type) {
@@ -34,10 +36,27 @@ void EffectProcessor::SetParameter(std::size_t index, EffectParameter value, std
     if (std::holds_alternative<Audio::Compressor>(unit)) sidechainEnabled = CompressorSidechainEnabled(updated);
     parameters = std::move(updated);
 }
+void EffectProcessor::SetSidechains(std::vector<std::shared_ptr<Audio::SignalTap>> sources) {
+    if (!std::holds_alternative<Audio::Compressor>(unit)) throw FormatError("Effect does not accept a sidechain");
+    for (auto current = sources.begin(); current != sources.end(); ++current) {
+        if (!*current || std::find(sources.begin(), current, *current) != current) throw FormatError("Invalid sidechain source");
+    }
+    sidechains = std::move(sources);
+}
 void EffectProcessor::SetBypassed(bool value) { bypassed = value; }
 void EffectProcessor::Process(float* stereo, std::size_t frames) {
-    if (frames && !stereo) throw FormatError("Missing effect output buffer");
-    if (!bypassed && sidechainEnabled) throw FormatError("Compressor requires a sidechain signal");
+    if ((frames && !stereo) || frames > std::numeric_limits<std::size_t>::max() / 2) throw FormatError("Invalid effect output buffer");
+    if (!frames || bypassed) return;
+    if (sidechainEnabled) {
+        if (sidechains.empty()) throw FormatError("Compressor requires a sidechain signal");
+        mixedSidechain.assign(frames * 2, 0);
+        for (const auto& source : sidechains) {
+            const auto& signal = source->GetSamples(frames);
+            for (std::size_t index = 0; index < signal.size(); ++index) mixedSidechain[index] += signal[index];
+        }
+        ProcessWithSidechain(stereo, frames, mixedSidechain.data(), 2);
+        return;
+    }
     if (!bypassed) std::visit([&](auto& processor) { processor.Process(stereo, frames); }, unit);
 }
 void EffectProcessor::ProcessWithSidechain(float* stereo, std::size_t frames, const float* sidechain, std::size_t channels) {

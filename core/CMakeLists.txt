@@ -15,6 +15,7 @@ add_library(OpenFmod STATIC
     src/Audio/Reverb/Reverb.cpp
     src/Audio/Reverb/Design.cpp
     src/Audio/Reverb/Settings.cpp
+    src/Audio/Dynamics/SignalTap.cpp
     src/Audio/Dynamics/Compressor.cpp
     src/Audio/Filters/Biquad.cpp
     src/Audio/Filters/ThreeBandEq.cpp

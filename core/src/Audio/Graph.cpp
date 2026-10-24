@@ -10,8 +10,8 @@ struct Graph::Bus {
     Mixer mixer;
     float gain{1};
     std::vector<float> buffer;
-    std::vector<std::unique_ptr<IAudioProcessor>> before;
-    std::vector<std::unique_ptr<IAudioProcessor>> after;
+    std::vector<std::shared_ptr<IAudioProcessor>> before;
+    std::vector<std::shared_ptr<IAudioProcessor>> after;
 };
 Graph::Graph(std::uint32_t sampleRate) : sampleRate(sampleRate) {
     buses.emplace(0, std::make_unique<Bus>(sampleRate, 0));
@@ -86,7 +86,7 @@ void Graph::SetGain(std::uint64_t bus, float gain) {
     if (!std::isfinite(gain) || gain < 0) throw FormatError("Invalid audio bus gain");
     requireBus(bus).gain = gain;
 }
-void Graph::AddProcessor(std::uint64_t bus, ProcessingStage stage, std::unique_ptr<IAudioProcessor> processor) {
+void Graph::AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_ptr<IAudioProcessor> processor) {
     if (!processor) throw FormatError("Missing audio processor");
     if (stage != ProcessingStage::BeforeFader && stage != ProcessingStage::AfterFader) {
         throw FormatError("Invalid audio processing stage");

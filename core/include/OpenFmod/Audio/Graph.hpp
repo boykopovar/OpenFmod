@@ -16,7 +16,7 @@ public:
     void RemoveDependency(std::uint64_t source, std::uint64_t consumer);
     Mixer& GetMixer(std::uint64_t bus);
     void SetGain(std::uint64_t bus, float gain);
-    void AddProcessor(std::uint64_t bus, ProcessingStage stage, std::unique_ptr<IAudioProcessor> processor);
+    void AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_ptr<IAudioProcessor> processor);
     void Render(float* stereo, std::size_t frames);
 private:
     struct Bus;

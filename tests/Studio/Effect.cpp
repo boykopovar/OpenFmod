@@ -27,6 +27,19 @@ void CheckEffect() {
     if (!rejected) throw std::runtime_error("Sidechain compressor silently used its input");
     const std::array<float, 2> sidechain{};
     processor.ProcessWithSidechain(signal.data(), 1, sidechain.data(), 2);
+    auto tap = std::make_shared<OpenFmod::Audio::SignalTap>();
+    tap->SetGain(0.5f);
+    signal = {0.1f, 0.2f};
+    tap->Process(signal.data(), 1);
+    if (signal[0] != 0.1f || signal[1] != 0.2f || tap->GetSamples(1)[1] != 0.1f) {
+        throw std::runtime_error("Sidechain tap changed the audible signal");
+    }
+    processor.SetSidechains({tap});
+    processor.Process(signal.data(), 1);
+    rejected = false;
+    try { tap->GetSamples(2); }
+    catch (const OpenFmod::FormatError&) { rejected = true; }
+    if (!rejected) throw std::runtime_error("Mismatched sidechain block accepted");
     std::string bytes(16, '\0');
     Append(bytes, 18, 4);
     Append(bytes, 0, 1);
