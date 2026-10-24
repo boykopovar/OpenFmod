@@ -16,10 +16,10 @@ struct PlanarLayout {
 class PlanarPanner {
 public:
     explicit PlanarPanner(PlanarLayout layout);
-    std::vector<float> Project(float directionDegrees, float extentDegrees) const;
+    std::vector<float> Project(float directionDegrees, float extentDegrees, bool normalized = true) const;
     std::vector<float> StereoDownmix() const;
 private:
-    void addPair(std::vector<float>& output, std::size_t index, float direction, float weight) const;
+    void addPair(std::vector<float>& output, std::size_t index, float direction, float weight, bool normalized = true) const;
     void normalize(std::vector<float>& output) const;
     PlanarLayout layout;
 };

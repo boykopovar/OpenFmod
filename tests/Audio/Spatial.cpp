@@ -1,5 +1,6 @@
 #include "OpenFmod/Audio/Spatial/Projection.hpp"
 #include "OpenFmod/Audio/Spatial/Layout.hpp"
+#include "OpenFmod/Audio/Spatial/Speakers.hpp"
 #include <cmath>
 #include <stdexcept>
 void CheckSpatial() {
@@ -21,6 +22,18 @@ void CheckSpatial() {
     const auto single = panner.Project(-45, 0);
     if (single[0] != 1 || single[1] != 0 || single[2] != 0 || single[3] != 0) {
         throw std::runtime_error("Source on a speaker leaked into another channel");
+    }
+    const Speakers speakers(SpeakerMode::Surround51);
+    for (int rotation = -180; rotation <= 180; rotation += 30) {
+        const auto matrix = speakers.ProjectStereo(25, 210, static_cast<float>(rotation));
+        for (std::size_t channel = 0; channel < 2; ++channel) {
+            float power = 0;
+            for (std::size_t speaker = 0; speaker < speakers.GetChannels(); ++speaker) {
+                const auto gain = matrix[channel * speakers.GetChannels() + speaker];
+                power += gain * gain;
+            }
+            if (std::abs(power - 1) > 0.000001f) throw std::runtime_error("Rotated stereo source changed power");
+        }
     }
     const auto balance = StereoBalance(0);
     if (std::abs(balance[0] - 1) > 0.000001f || std::abs(balance[1] - 1) > 0.000001f) {

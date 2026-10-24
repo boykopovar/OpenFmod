@@ -27,13 +27,13 @@ PlanarPanner::PlanarPanner(PlanarLayout layout) : layout(std::move(layout)) {
         }
     }
 }
-void PlanarPanner::addPair(std::vector<float>& output, std::size_t index, float direction, float weight) const {
+void PlanarPanner::addPair(std::vector<float>& output, std::size_t index, float direction, float weight, bool normalized) const {
     const auto next = (index + 1) % layout.Speakers.size();
     const auto first = layout.Speakers[index].Azimuth;
     const auto last = layout.Speakers[next].Azimuth + (next ? 0 : 360);
     const auto left = std::sin((last - direction) * 0.0174532925f);
     const auto right = std::sin((direction - first) * 0.0174532925f);
-    const auto scale = weight / std::sqrt(left * left + right * right);
+    const auto scale = weight / (normalized ? std::sqrt(left * left + right * right) : std::sin((last - first) * 0.0174532925f));
     output[layout.Speakers[index].Channel] += left * scale;
     output[layout.Speakers[next].Channel] += right * scale;
 }
@@ -44,7 +44,7 @@ void PlanarPanner::normalize(std::vector<float>& output) const {
     const auto gain = 1 / std::sqrt(power);
     for (auto& value : output) value *= gain;
 }
-std::vector<float> PlanarPanner::Project(float directionDegrees, float extentDegrees) const {
+std::vector<float> PlanarPanner::Project(float directionDegrees, float extentDegrees, bool normalized) const {
     if (!std::isfinite(directionDegrees) || !std::isfinite(extentDegrees) || extentDegrees < 0 || extentDegrees > 360) {
         throw FormatError("Invalid planar projection");
     }
@@ -65,7 +65,7 @@ std::vector<float> PlanarPanner::Project(float directionDegrees, float extentDeg
             const auto shift = turn * 360.0f;
             if (extentDegrees == 0) {
                 if (direction >= first + shift && direction < last + shift) {
-                    addPair(result, index, direction - shift, 1);
+                    addPair(result, index, direction - shift, 1, normalized);
                     return result;
                 }
             } else {
@@ -75,7 +75,7 @@ std::vector<float> PlanarPanner::Project(float directionDegrees, float extentDeg
             }
         }
     }
-    normalize(result);
+    if (normalized) normalize(result);
     return result;
 }
 std::vector<float> PlanarPanner::StereoDownmix() const {
