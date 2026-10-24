@@ -1,6 +1,7 @@
 #include "OpenFmod/Audio/Spatial/Projection.hpp"
 #include "OpenFmod/Audio/Spatial/Layout.hpp"
 #include "OpenFmod/Audio/Spatial/Speakers.hpp"
+#include "OpenFmod/Audio/Spatial/Panner.hpp"
 #include <cmath>
 #include <stdexcept>
 void CheckSpatial() {
@@ -35,6 +36,23 @@ void CheckSpatial() {
             if (std::abs(power - 1) > 0.000001f) throw std::runtime_error("Rotated stereo source changed power");
         }
     }
+    PannerSettings settings;
+    settings.Mode = 2;
+    settings.Layout = SpeakerMode::Surround51;
+    settings.SpatialBlend = 1;
+    settings.Listeners[0].Distance = 100;
+    const auto muted = PannerMatrix(settings);
+    for (const auto value : muted) if (value != 0) throw std::runtime_error("Distant source was not attenuated");
+    settings.Mode = 1;
+    Panner whole(settings), partitioned(settings);
+    settings.Balance = 100;
+    whole.Configure(settings, 64);
+    partitioned.Configure(settings, 64);
+    std::vector<float> first(256, 1), second(first);
+    whole.Process(first.data(), 128);
+    partitioned.Process(second.data(), 23);
+    partitioned.Process(second.data() + 46, 105);
+    if (first != second) throw std::runtime_error("Panning ramp depends on block partitioning");
     const auto balance = StereoBalance(0);
     if (std::abs(balance[0] - 1) > 0.000001f || std::abs(balance[1] - 1) > 0.000001f) {
         throw std::runtime_error("Centered balance changes channel gain");

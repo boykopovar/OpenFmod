@@ -7,6 +7,7 @@ EffectProcessor::Unit EffectProcessor::create(const Effect& effect, std::uint32_
     switch (effect.Type) {
         case 18: return Audio::Compressor(sampleRate, CompressorConfiguration(effect.Parameters));
         case 19: return Audio::Reverb(sampleRate, ReverbConfiguration(effect.Parameters));
+        case 27: return Audio::Panner(PannerConfiguration(effect.Parameters));
         case 28: return Audio::ThreeBandEq(sampleRate, ThreeBandConfiguration(effect.Parameters));
         case 36: {
             Audio::MultibandEq result(sampleRate);
@@ -30,6 +31,7 @@ void EffectProcessor::SetParameter(std::size_t index, EffectParameter value, std
         using TProcessor = std::decay_t<decltype(processor)>;
         if constexpr (std::is_same_v<TProcessor, Audio::Compressor>) processor.Configure(CompressorConfiguration(updated));
         else if constexpr (std::is_same_v<TProcessor, Audio::Reverb>) processor.Configure(ReverbConfiguration(updated));
+        else if constexpr (std::is_same_v<TProcessor, Audio::Panner>) processor.Configure(PannerConfiguration(updated), rampFrames);
         else if constexpr (std::is_same_v<TProcessor, Audio::ThreeBandEq>) processor.Configure(ThreeBandConfiguration(updated));
         else processor.Configure(index / 4, EqualizerConfiguration(updated, index / 4), rampFrames);
     }, unit);

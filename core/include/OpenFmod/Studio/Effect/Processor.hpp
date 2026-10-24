@@ -13,7 +13,7 @@ public:
     void Process(float* stereo, std::size_t frames) override;
     void ProcessWithSidechain(float* stereo, std::size_t frames, const float* sidechain, std::size_t channels);
 private:
-    using Unit = std::variant<Audio::Compressor, Audio::Reverb, Audio::ThreeBandEq, Audio::MultibandEq>;
+    using Unit = std::variant<Audio::Compressor, Audio::Reverb, Audio::Panner, Audio::ThreeBandEq, Audio::MultibandEq>;
     static Unit create(const Effect& effect, std::uint32_t sampleRate);
     std::vector<EffectParameter> parameters;
     Unit unit;

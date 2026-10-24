@@ -13,6 +13,8 @@ add_library(OpenFmod STATIC
     src/Audio/Graph.cpp
     src/Audio/Spatial/Layout.cpp
     src/Audio/Spatial/Speakers.cpp
+    src/Audio/Spatial/Panner.cpp
+    src/Audio/Spatial/PannerMatrix.cpp
     src/Audio/Spatial/Projection.cpp
     src/Audio/Reverb/Reverb.cpp
     src/Audio/Reverb/Design.cpp
@@ -30,6 +32,7 @@ add_library(OpenFmod STATIC
     src/Studio/Automation/Controller.cpp
     src/Studio/Automation/Resolver.cpp
     src/Studio/Effect/Configuration.cpp
+    src/Studio/Effect/PannerConfiguration.cpp
     src/Studio/Effect/Processor.cpp
     src/Studio/Effect/Model.cpp
     src/Studio/Snapshot/Model.cpp
