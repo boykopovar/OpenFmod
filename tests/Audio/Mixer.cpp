@@ -10,6 +10,14 @@ public:
         for (std::size_t index = 0; index < frames * 2; ++index) stereo[index] += 1;
     }
 };
+class Visit final : public OpenFmod::Audio::IAudioProcessor {
+public:
+    Visit(std::vector<int>& visits, int id) : visits(visits), id(id) {}
+    void Process(float*, std::size_t) override { visits.push_back(id); }
+private:
+    std::vector<int>& visits;
+    int id;
+};
 class Signal final : public OpenFmod::Audio::IAudioSource {
 public:
     explicit Signal(std::vector<float> data = {0, 0, 1, 2, 3, 4, 5, 6}, std::size_t* rewinds = nullptr)
@@ -34,6 +42,23 @@ private:
 }
 void CheckMixer() {
     using namespace OpenFmod::Audio;
+    Graph ordered(4);
+    const auto source = ordered.AddBus(0);
+    const auto consumer = ordered.AddBus(0);
+    std::vector<int> visits;
+    ordered.AddProcessor(source, ProcessingStage::AfterFader, std::make_unique<Visit>(visits, 1));
+    ordered.AddProcessor(consumer, ProcessingStage::BeforeFader, std::make_unique<Visit>(visits, 2));
+    ordered.AddDependency(source, consumer);
+    bool rejected = false;
+    try { ordered.AddDependency(consumer, source); }
+    catch (const std::runtime_error&) { rejected = true; }
+    std::array<float, 2> silent{};
+    ordered.Render(silent.data(), 1);
+    if (!rejected || visits != std::vector<int>{1, 2}) throw std::runtime_error("Audio dependency order or rollback failed");
+    ordered.RemoveDependency(source, consumer);
+    visits.clear();
+    ordered.Render(silent.data(), 1);
+    if (visits != std::vector<int>{2, 1}) throw std::runtime_error("Removed audio dependency retained its order");
     Graph graph(4);
     const auto group = graph.AddBus(0);
     const auto child = graph.AddBus(group);
