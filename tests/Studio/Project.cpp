@@ -1,4 +1,5 @@
 #include "OpenFmod/Studio/Project/Library.hpp"
+#include "OpenFmod/Studio/Bus/Graph.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 namespace {
@@ -8,6 +9,30 @@ std::string chunk(const std::string& id, const std::string& data) {
     result += data;
     if (data.size() % 2) result += '\0';
     return result;
+}
+std::string bus(unsigned char identity, unsigned char parent, const std::string& kind) {
+    using namespace TestData;
+    std::string header(16, '\0');
+    header[0] = static_cast<char>(identity);
+    Append(header, 24, 2);
+    std::string route(16, '\0');
+    route[0] = static_cast<char>(parent);
+    header += route;
+    Append(header, 0, 8);
+    std::string values;
+    Append(values, 0, 8);
+    Append(values, 0, 4);
+    Append(values, 8, 2);
+    AppendFloat(values, 0);
+    AppendFloat(values, 0);
+    Append(values, 0, 2);
+    Append(values, 32, 4);
+    Append(values, 0, 4);
+    Append(values, 0, 4);
+    Append(values, 0xffffffff, 4);
+    Append(values, 0, 4);
+    return chunk("LIST", kind + "US" + chunk(kind + "SB", header) + chunk("BUS ", values)
+        + chunk("LIST", "PRPS" + chunk("LCNT", std::string(4, '\0'))));
 }
 std::string project(unsigned char identity, float value) {
     using namespace TestData;
@@ -32,6 +57,10 @@ std::string project(unsigned char identity, float value) {
     body += chunk("LIST", "WAVS");
     body += chunk("LIST", "CRVS" + chunk("LCNT", count) + chunk("CURV", curve));
     body += chunk("LIST", "CTRS" + chunk("LCNT", count) + chunk("CTRL", controller));
+    std::string masters;
+    Append(masters, 2, 4);
+    body += chunk("LIST", "MBSS" + chunk("LCNT", masters) + bus(8, 0, "MB") + bus(9, 0, "MB"));
+    body += chunk("LIST", "GBSS" + chunk("LCNT", count) + bus(10, 9, "GB"));
     return chunk("RIFF", "FEV " + chunk("FMT ", version) + chunk("LIST", body));
 }
 }
@@ -45,6 +74,24 @@ void CheckProject() {
     if (library.Require<Curve>(id).Evaluate(0) != 3 || library.Require<Controller>(id).CurveId != id) {
         throw std::runtime_error("Resource identities must be scoped by type");
     }
+    if (!library.Contains<Curve>(id) || library.GetAll<Curve>().size() != 1) throw std::runtime_error("Incorrect typed resource enumeration");
+    Event event;
+    event.InputBus[0] = 8;
+    event.MasterBus[0] = 9;
+    OpenFmod::Bank::Guid group{};
+    group[0] = 10;
+    event.Groups.push_back(group);
+    BusGraph graph(library, 48000);
+    const auto scope1 = graph.CreateScope(event);
+    const auto scope2 = graph.CreateScope(event);
+    if (&graph.GetMixer(group, scope1) == &graph.GetMixer(group, scope2)
+        || &graph.GetMixer(event.InputBus, scope1) != &graph.GetMixer(event.InputBus, scope2)) {
+        throw std::runtime_error("Local and shared bus scope isolation failed");
+    }
+    std::array<float, 32> silent{};
+    graph.Render(silent.data(), 16);
+    graph.RemoveScope(scope1);
+    graph.RemoveScope(scope2);
     const auto retained = library.Retain<Curve>(id);
     library.Unload(first);
     if (library.Require<Curve>(id).Evaluate(0) != 3 || retained->Evaluate(0) != 3) {

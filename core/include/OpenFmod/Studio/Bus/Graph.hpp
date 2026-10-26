@@ -1,0 +1,47 @@
+#ifndef OPENFMOD_STUDIO_BUS_GRAPH_HPP
+#define OPENFMOD_STUDIO_BUS_GRAPH_HPP
+#include "OpenFmod/Audio/Graph.hpp"
+#include "OpenFmod/Studio/Project/Library.hpp"
+#include "OpenFmod/Studio/Effect/Processor.hpp"
+namespace OpenFmod::Studio {
+class BusGraph {
+public:
+    BusGraph(const Library& library, std::uint32_t sampleRate);
+    std::uint64_t CreateScope(const Event& event);
+    void RemoveScope(std::uint64_t scope);
+    std::uint64_t Resolve(const Bank::Guid& bus, std::uint64_t scope = 0);
+    void SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scope = 0);
+    Audio::Mixer& GetMixer(const Bank::Guid& bus, std::uint64_t scope = 0);
+    void Render(float* stereo, std::size_t frames);
+private:
+    using Key = std::pair<std::uint64_t, Bank::Guid>;
+    struct Scope {
+        Bank::Guid Master;
+        Bank::Guid Input;
+        std::set<Bank::Guid> Local;
+    };
+    struct Node {
+        std::uint64_t AudioId{};
+        std::shared_ptr<const Bus> Model;
+        float BaseGain{1};
+        std::map<Bank::Guid, std::shared_ptr<EffectProcessor>> Effects;
+        std::map<Bank::Guid, std::shared_ptr<Audio::SignalTap>> Taps;
+    };
+    Key key(const Bank::Guid& bus, std::uint64_t scope) const;
+    std::uint64_t resolve(const Bank::Guid& bus, std::uint64_t scope);
+    void attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage);
+    void connect();
+    float baseGain(const Bus& bus) const;
+    const Library& library;
+    std::uint32_t sampleRate;
+    Audio::Graph graph;
+    std::map<std::uint64_t, Scope> scopes;
+    std::map<Key, Node> nodes;
+    std::map<Bank::Guid, std::vector<Bank::Guid>> providers;
+    std::map<Bank::Guid, std::vector<Bank::Guid>> controls;
+    std::set<Key> resolving;
+    std::set<std::pair<std::uint64_t, std::uint64_t>> connections;
+    std::uint64_t nextScope{1};
+};
+}
+#endif

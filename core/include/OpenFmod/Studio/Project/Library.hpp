@@ -12,6 +12,19 @@ public:
     void Unload(const Bank::Guid& id);
     Bank::Guid FindId(const std::string& path) const;
     template<class TValue>
+    bool Contains(const Bank::Guid& id) const {
+        return objects.count(ResourceKey{typeid(TValue), id}) != 0;
+    }
+    template<class TValue>
+    std::vector<std::shared_ptr<const TValue>> GetAll() const {
+        std::vector<std::shared_ptr<const TValue>> result;
+        const std::type_index type(typeid(TValue));
+        for (auto item = objects.lower_bound({type, {}}); item != objects.end() && item->first.first == type; ++item) {
+            result.emplace_back(item->second.Owner, std::get<const TValue*>(item->second.Value));
+        }
+        return result;
+    }
+    template<class TValue>
     std::shared_ptr<const Project> GetOwner(const Bank::Guid& id) const {
         return requireEntry(ResourceKey{typeid(TValue), id}).Owner;
     }
