@@ -47,7 +47,7 @@ void Mixer::Render(float* stereo, std::size_t frames) {
     std::lock_guard<std::mutex> lock(mutex);
     std::fill_n(stereo, frames * 2, 0.0f);
     for (auto iterator = voices.begin(); iterator != voices.end();) {
-        if (!iterator->second.Mix(stereo, frames, gain)) iterator = voices.erase(iterator);
+        if (!iterator->second.Mix(stereo, frames, gain).Playing) iterator = voices.erase(iterator);
         else ++iterator;
     }
     for (std::size_t index = 0; index < frames * 2; ++index) {

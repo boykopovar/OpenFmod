@@ -42,6 +42,16 @@ private:
 }
 void CheckMixer() {
     using namespace OpenFmod::Audio;
+    VoiceSettings clipped;
+    clipped.StartFrame = 1;
+    clipped.EndFrame = 3;
+    clipped.DelayFrames = 2;
+    Voice voice(std::make_unique<Signal>(), clipped, 4);
+    std::array<float, 12> clippedOutput{};
+    const auto progress = voice.Mix(clippedOutput.data(), 6, 1);
+    if (progress.Playing || progress.Frames != 4 || clippedOutput != std::array<float, 12>{0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0}) {
+        throw std::runtime_error("Voice did not report its exact clipped ending");
+    }
     Graph ordered(4);
     const auto source = ordered.AddBus(0);
     const auto consumer = ordered.AddBus(0);

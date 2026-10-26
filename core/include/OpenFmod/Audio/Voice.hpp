@@ -3,6 +3,7 @@
 #include "OpenFmod/Audio/IAudioSource.hpp"
 #include <array>
 #include <memory>
+#include <optional>
 namespace OpenFmod::Audio {
 struct VoiceSettings {
     float Gain{1};
@@ -12,11 +13,16 @@ struct VoiceSettings {
     std::uint64_t LoopBegin{};
     std::uint64_t LoopEnd{};
     std::int32_t Repeats{};
+    std::optional<std::uint64_t> EndFrame;
+};
+struct VoiceProgress {
+    std::size_t Frames{};
+    bool Playing{};
 };
 class Voice {
 public:
     Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate);
-    bool Mix(float* stereo, std::size_t frames, float masterGain);
+    VoiceProgress Mix(float* stereo, std::size_t frames, float masterGain);
     void SetGain(float value);
     void SetPitch(float value);
 private:
@@ -31,6 +37,7 @@ private:
     Format format;
     double rateRatio;
     double position{};
+    std::uint64_t endFrame{};
     std::array<float, 1024> buffer{};
     std::uint64_t bufferBegin{};
     std::size_t buffered{};

@@ -10,13 +10,14 @@ Voice::Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::
     if (!outputRate || !format.Rate || !format.Channels || format.Channels > 2 || format.Frames > (std::uint64_t{1} << 53)) {
         throw FormatError("Unsupported audio source format");
     }
-    if (settings.Repeats < -1 || (settings.Repeats && (settings.LoopBegin >= settings.LoopEnd || settings.LoopEnd > format.Frames))) {
+    endFrame = settings.EndFrame.value_or(format.Frames);
+    if (endFrame > format.Frames || settings.StartFrame > endFrame) throw FormatError("Invalid voice playback range");
+    if (settings.Repeats < -1 || (settings.Repeats && (settings.LoopBegin >= settings.LoopEnd || settings.LoopEnd > endFrame))) {
         throw FormatError("Invalid audio loop range");
     }
     rateRatio = static_cast<double>(format.Rate) / outputRate;
     SetGain(settings.Gain);
     SetPitch(settings.Pitch);
-    if (settings.StartFrame > format.Frames) throw FormatError("Voice start exceeds sample duration");
     position = static_cast<double>(settings.StartFrame);
     this->source->Seek(settings.StartFrame);
 }
@@ -35,7 +36,7 @@ std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
     if (!buffered || frame < bufferBegin || frame >= bufferBegin + buffered) {
         source->Seek(frame);
         bufferBegin = frame;
-        const auto count = static_cast<std::size_t>(std::min<std::uint64_t>(512, format.Frames - frame));
+        const auto count = static_cast<std::size_t>(std::min<std::uint64_t>(512, endFrame - frame));
         buffered = source->Read(buffer.data(), count);
         if (buffered != count) throw FormatError("Audio source duration does not match its data");
         for (std::size_t index = 0; index < buffered * format.Channels; ++index) {
@@ -53,7 +54,7 @@ std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
     } else cached.Value = {buffer[offset], buffer[offset + 1]};
     return cached.Value;
 }
-bool Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
+VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
     if (frames && !stereo) throw FormatError("Missing voice output buffer");
     if (!std::isfinite(masterGain) || masterGain < 0) throw FormatError("Invalid master gain");
     const auto gain = settings.Gain * masterGain;
@@ -72,12 +73,12 @@ bool Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
                 settings.Repeats = 0;
             }
         }
-        if (position >= format.Frames) return false;
+        if (position >= endFrame) return {output, false};
         const auto frame = static_cast<std::uint64_t>(position);
         const auto fraction = static_cast<float>(position - frame);
         auto next = frame + 1;
         if (settings.Repeats && next == settings.LoopEnd) next = settings.LoopBegin;
-        else if (next == format.Frames) next = frame;
+        else if (next == endFrame) next = frame;
         const auto first = readFrame(frame);
         const auto second = fraction ? readFrame(next) : first;
         for (std::size_t channel = 0; channel < 2; ++channel) {
@@ -85,6 +86,6 @@ bool Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
         }
         position += rateRatio * settings.Pitch;
     }
-    return settings.Repeats || position < format.Frames;
+    return {frames, settings.DelayFrames != 0 || settings.Repeats != 0 || position < endFrame};
 }
 }
