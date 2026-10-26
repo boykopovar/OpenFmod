@@ -2,6 +2,7 @@
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 #include "OpenFmod/Studio/Modulation/SlewState.hpp"
+#include "OpenFmod/Studio/Parameter/State.hpp"
 void CheckParameter() {
     using namespace TestData;
     OpenFmod::Studio::SlewState slew(2, 1);
@@ -34,6 +35,19 @@ void CheckParameter() {
     if (model.Name != "wind" || model.Default != 2 || model.SeekSpeed != 3 || model.DescendingSeekSpeed != 1) {
         throw std::runtime_error("Incorrect parameter model");
     }
+    auto owned = std::make_shared<OpenFmod::Studio::Parameter>(model);
+    OpenFmod::Studio::ParameterState state(owned, model.Default);
+    state.SetValue(20);
+    state.Advance(1);
+    if (state.GetTarget() != 10 || state.GetValue() != 5) throw std::runtime_error("Incorrect parameter ascent");
+    state.SetValue(-10);
+    state.Advance(1);
+    if (state.GetTarget() != 0 || state.GetValue() != 4) throw std::runtime_error("Incorrect parameter descent");
+    owned = std::make_shared<OpenFmod::Studio::Parameter>(model);
+    owned->Flags = 8;
+    OpenFmod::Studio::ParameterState stepped(owned, 0);
+    stepped.SetValue(4.9f, true);
+    if (stepped.GetValue() != 4) throw std::runtime_error("Discrete parameter did not round down");
     try { OpenFmod::Studio::ReadParameter(bytes, chunk, 143); }
     catch (const OpenFmod::FormatError&) { return; }
     throw std::runtime_error("Parameter version mismatch accepted");
