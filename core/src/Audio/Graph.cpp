@@ -99,7 +99,13 @@ void Graph::Render(float* stereo, std::size_t frames) {
     if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) {
         throw FormatError("Invalid audio graph output buffer");
     }
-    if (!frames) return;
+    if (!frames) {
+        for (auto& [id, bus] : buses) {
+            bus->mixer.Render(nullptr, 0);
+            static_cast<void>(id);
+        }
+        return;
+    }
     const auto samples = frames * 2;
     for (auto& entry : buses) {
         auto& node = *entry.second;
@@ -121,5 +127,14 @@ void Graph::Render(float* stereo, std::size_t frames) {
     }
     const auto& output = requireBus(0).buffer;
     std::copy(output.begin(), output.end(), stereo);
+}
+std::optional<std::uint64_t> Graph::FramesUntilNextEnd() const {
+    std::optional<std::uint64_t> result;
+    for (const auto& [id, bus] : buses) {
+        const auto end = bus->mixer.FramesUntilNextEnd();
+        if (end && (!result || *end < *result)) result = end;
+        static_cast<void>(id);
+    }
+    return result;
 }
 }

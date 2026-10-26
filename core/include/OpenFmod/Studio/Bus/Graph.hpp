@@ -13,6 +13,7 @@ public:
     void SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scope = 0);
     Audio::Mixer& GetMixer(const Bank::Guid& bus, std::uint64_t scope = 0);
     void Render(float* stereo, std::size_t frames);
+    std::optional<std::uint64_t> FramesUntilNextEnd() const;
 private:
     using Key = std::pair<std::uint64_t, Bank::Guid>;
     struct Scope {

@@ -47,11 +47,23 @@ void CheckMixer() {
     clipped.EndFrame = 3;
     clipped.DelayFrames = 2;
     Voice voice(std::make_unique<Signal>(), clipped, 4);
+    if (voice.FramesUntilEnd() != 4) throw std::runtime_error("Incorrect delayed voice endpoint");
     std::array<float, 12> clippedOutput{};
     const auto progress = voice.Mix(clippedOutput.data(), 6, 1);
     if (progress.Playing || progress.Frames != 4 || clippedOutput != std::array<float, 12>{0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0}) {
         throw std::runtime_error("Voice did not report its exact clipped ending");
     }
+    if (voice.FramesUntilEnd() != 0) throw std::runtime_error("Completed voice retained a duration");
+    clipped.StartFrame = 0;
+    clipped.EndFrame = 4;
+    clipped.DelayFrames = 3;
+    clipped.LoopBegin = 1;
+    clipped.LoopEnd = 3;
+    clipped.Repeats = 2;
+    Voice repeated(std::make_unique<Signal>(), clipped, 4);
+    if (repeated.FramesUntilEnd() != 11) throw std::runtime_error("Incorrect looped voice endpoint");
+    repeated.SetPitch(2);
+    if (repeated.FramesUntilEnd() != 7) throw std::runtime_error("Pitch change retained the previous endpoint");
     Graph ordered(4);
     const auto source = ordered.AddBus(0);
     const auto consumer = ordered.AddBus(0);

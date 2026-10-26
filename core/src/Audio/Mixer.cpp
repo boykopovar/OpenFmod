@@ -41,11 +41,20 @@ void Mixer::SetVoicePitch(std::uint64_t voice, float value) {
     std::lock_guard<std::mutex> lock(mutex);
     requireVoice(voice).SetPitch(value);
 }
+std::optional<std::uint64_t> Mixer::FramesUntilNextEnd() const {
+    std::lock_guard<std::mutex> lock(mutex);
+    std::optional<std::uint64_t> result;
+    for (const auto& [id, voice] : voices) {
+        const auto end = voice.FramesUntilEnd();
+        if (end && (!result || *end < *result)) result = end;
+        static_cast<void>(id);
+    }
+    return result;
+}
 void Mixer::Render(float* stereo, std::size_t frames) {
     if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) throw FormatError("Invalid mixer output buffer");
-    if (!frames) return;
     std::lock_guard<std::mutex> lock(mutex);
-    std::fill_n(stereo, frames * 2, 0.0f);
+    if (frames) std::fill_n(stereo, frames * 2, 0.0f);
     for (auto iterator = voices.begin(); iterator != voices.end();) {
         if (!iterator->second.Mix(stereo, frames, gain).Playing) iterator = voices.erase(iterator);
         else ++iterator;

@@ -18,6 +18,7 @@ public:
     void SetGain(std::uint64_t bus, float gain);
     void AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_ptr<IAudioProcessor> processor);
     void Render(float* stereo, std::size_t frames);
+    std::optional<std::uint64_t> FramesUntilNextEnd() const;
 private:
     struct Bus;
     Bus& requireBus(std::uint64_t id);

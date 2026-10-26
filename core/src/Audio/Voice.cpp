@@ -2,6 +2,7 @@
 #include "OpenFmod/Binary/Reader.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 namespace OpenFmod::Audio {
 Voice::Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate)
     : source(std::move(source)), settings(settings) {
@@ -28,6 +29,16 @@ void Voice::SetGain(float value) {
 void Voice::SetPitch(float value) {
     if (!std::isfinite(value) || value <= 0) throw FormatError("Invalid voice pitch");
     settings.Pitch = value;
+}
+std::optional<std::uint64_t> Voice::FramesUntilEnd() const {
+    if (settings.Repeats < 0) return std::nullopt;
+    const auto remaining = std::max(0.0, static_cast<double>(endFrame) - position
+        + static_cast<double>(settings.Repeats) * (settings.LoopEnd - settings.LoopBegin));
+    const auto frames = std::ceil(remaining / (rateRatio * settings.Pitch));
+    if (frames >= static_cast<double>(std::numeric_limits<std::uint64_t>::max() - settings.DelayFrames)) {
+        throw FormatError("Voice duration overflow");
+    }
+    return settings.DelayFrames + static_cast<std::uint64_t>(frames);
 }
 std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
     for (const auto& cached : recent) {

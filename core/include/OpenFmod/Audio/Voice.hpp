@@ -25,6 +25,7 @@ public:
     VoiceProgress Mix(float* stereo, std::size_t frames, float masterGain);
     void SetGain(float value);
     void SetPitch(float value);
+    std::optional<std::uint64_t> FramesUntilEnd() const;
 private:
     struct CachedFrame {
         std::uint64_t Position{};

@@ -13,6 +13,7 @@ public:
     void SetGain(float value);
     void SetVoiceGain(std::uint64_t voice, float value);
     void SetVoicePitch(std::uint64_t voice, float value);
+    std::optional<std::uint64_t> FramesUntilNextEnd() const;
     void Render(float* stereo, std::size_t frames);
 private:
     Voice& requireVoice(std::uint64_t voice);

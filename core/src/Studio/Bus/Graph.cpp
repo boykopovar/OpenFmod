@@ -76,4 +76,5 @@ void BusGraph::SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scop
     graph.SetGain(id, nodes.at(key(bus, scope)).BaseGain * volume);
 }
 void BusGraph::Render(float* stereo, std::size_t frames) { graph.Render(stereo, frames); }
+std::optional<std::uint64_t> BusGraph::FramesUntilNextEnd() const { return graph.FramesUntilNextEnd(); }
 }
