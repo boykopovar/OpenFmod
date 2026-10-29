@@ -3,13 +3,6 @@
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 namespace {
-std::string chunk(const std::string& id, const std::string& data) {
-    std::string result = id;
-    TestData::Append(result, data.size(), 4);
-    result += data;
-    if (data.size() % 2) result += '\0';
-    return result;
-}
 std::string bus(unsigned char identity, unsigned char parent, const std::string& kind) {
     using namespace TestData;
     std::string header(16, '\0');
@@ -31,8 +24,8 @@ std::string bus(unsigned char identity, unsigned char parent, const std::string&
     Append(values, 0, 4);
     Append(values, 0xffffffff, 4);
     Append(values, 0, 4);
-    return chunk("LIST", kind + "US" + chunk(kind + "SB", header) + chunk("BUS ", values)
-        + chunk("LIST", "PRPS" + chunk("LCNT", std::string(4, '\0'))));
+    return TestData::Chunk("LIST", kind + "US" + TestData::Chunk(kind + "SB", header) + TestData::Chunk("BUS ", values)
+        + TestData::Chunk("LIST", "PRPS" + TestData::Chunk("LCNT", std::string(4, '\0'))));
 }
 std::string project(unsigned char identity, float value) {
     using namespace TestData;
@@ -53,15 +46,15 @@ std::string project(unsigned char identity, float value) {
     controller[32] = 7;
     std::string id(16, '\0');
     id[0] = static_cast<char>(identity);
-    std::string body = "PROJ" + chunk("BNKI", id) + chunk("SNDH", {}) + chunk("STDT", {});
-    body += chunk("LIST", "WAVS");
-    body += chunk("LIST", "CRVS" + chunk("LCNT", count) + chunk("CURV", curve));
-    body += chunk("LIST", "CTRS" + chunk("LCNT", count) + chunk("CTRL", controller));
+    std::string body = "PROJ" + TestData::Chunk("BNKI", id) + TestData::Chunk("SNDH", {}) + TestData::Chunk("STDT", {});
+    body += TestData::Chunk("LIST", "WAVS");
+    body += TestData::Chunk("LIST", "CRVS" + TestData::Chunk("LCNT", count) + TestData::Chunk("CURV", curve));
+    body += TestData::Chunk("LIST", "CTRS" + TestData::Chunk("LCNT", count) + TestData::Chunk("CTRL", controller));
     std::string masters;
     Append(masters, 2, 4);
-    body += chunk("LIST", "MBSS" + chunk("LCNT", masters) + bus(8, 0, "MB") + bus(9, 0, "MB"));
-    body += chunk("LIST", "GBSS" + chunk("LCNT", count) + bus(10, 9, "GB"));
-    return chunk("RIFF", "FEV " + chunk("FMT ", version) + chunk("LIST", body));
+    body += TestData::Chunk("LIST", "MBSS" + TestData::Chunk("LCNT", masters) + bus(8, 0, "MB") + bus(9, 0, "MB"));
+    body += TestData::Chunk("LIST", "GBSS" + TestData::Chunk("LCNT", count) + bus(10, 9, "GB"));
+    return TestData::Chunk("RIFF", "FEV " + TestData::Chunk("FMT ", version) + TestData::Chunk("LIST", body));
 }
 }
 void CheckProject() {

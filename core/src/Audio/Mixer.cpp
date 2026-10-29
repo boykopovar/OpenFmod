@@ -21,7 +21,8 @@ bool Mixer::Stop(std::uint64_t voice) {
 }
 bool Mixer::IsPlaying(std::uint64_t voice) const {
     std::lock_guard<std::mutex> lock(mutex);
-    return voices.find(voice) != voices.end();
+    const auto found = voices.find(voice);
+    return found != voices.end() && found->second.FramesUntilEnd(pitch) != std::optional<std::uint64_t>{0};
 }
 void Mixer::SetGain(float value) {
     if (!std::isfinite(value) || value < 0) throw FormatError("Invalid mixer gain");

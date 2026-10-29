@@ -12,5 +12,12 @@ inline void AppendFloat(std::string& bytes, float value) {
     std::memcpy(&bits, &value, sizeof(bits));
     Append(bytes, bits, 4);
 }
+inline std::string Chunk(const std::string& id, const std::string& data) {
+    std::string result = id;
+    Append(result, data.size(), 4);
+    result += data;
+    if (data.size() % 2) result += '\0';
+    return result;
+}
 }
 #endif

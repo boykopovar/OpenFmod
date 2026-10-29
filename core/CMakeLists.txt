@@ -34,6 +34,7 @@ add_library(OpenFmod STATIC
     src/Studio/Levels.cpp
     src/Studio/Playback/Position.cpp
     src/Studio/Playback/Controls.cpp
+    src/Studio/Playback/Multi.cpp
     src/Studio/Playback/Sound.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
