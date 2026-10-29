@@ -33,6 +33,11 @@ Voice& Mixer::requireVoice(std::uint64_t voice) {
     if (found == voices.end()) throw FormatError("Unknown audio voice");
     return found->second;
 }
+void Mixer::SetPitch(float value) {
+    if (!std::isfinite(value) || value <= 0) throw FormatError("Invalid mixer pitch");
+    std::lock_guard<std::mutex> lock(mutex);
+    pitch = value;
+}
 void Mixer::SetVoiceGain(std::uint64_t voice, float value) {
     std::lock_guard<std::mutex> lock(mutex);
     requireVoice(voice).SetGain(value);
@@ -45,7 +50,7 @@ std::optional<std::uint64_t> Mixer::FramesUntilNextEnd() const {
     std::lock_guard<std::mutex> lock(mutex);
     std::optional<std::uint64_t> result;
     for (const auto& [id, voice] : voices) {
-        const auto end = voice.FramesUntilEnd();
+        const auto end = voice.FramesUntilEnd(pitch);
         if (end && (!result || *end < *result)) result = end;
         static_cast<void>(id);
     }
@@ -56,7 +61,7 @@ void Mixer::Render(float* stereo, std::size_t frames) {
     std::lock_guard<std::mutex> lock(mutex);
     if (frames) std::fill_n(stereo, frames * 2, 0.0f);
     for (auto iterator = voices.begin(); iterator != voices.end();) {
-        if (!iterator->second.Mix(stereo, frames, gain).Playing) iterator = voices.erase(iterator);
+        if (!iterator->second.Mix(stereo, frames, gain, pitch).Playing) iterator = voices.erase(iterator);
         else ++iterator;
     }
     for (std::size_t index = 0; index < frames * 2; ++index) {

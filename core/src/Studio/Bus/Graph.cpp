@@ -20,20 +20,19 @@ BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
     if (found == scopes.end()) throw FormatError("Unknown bus scope");
     return {found->second.Local.count(bus) ? scope : 0, bus};
 }
-float BusGraph::baseGain(const Bus& bus) const {
-    float decibels = bus.Levels.VolumeDecibels;
+MixControls BusGraph::baseLevels(const Bus& bus) const {
+    auto levels = bus.Levels;
     std::set<Bank::Guid> visiting;
     std::function<void(const Bank::Guid&)> apply = [&](const Bank::Guid& id) {
         if (!visiting.insert(id).second) throw FormatError("Cyclic volume control routing");
         const auto& control = library.Require<VolumeControl>(id);
-        decibels += control.Levels.VolumeDecibels;
+        levels.VolumeDecibels += control.Levels.VolumeDecibels;
+        levels.PitchSemitones += control.Levels.PitchSemitones;
         for (const auto& parent : control.Levels.VolumeControls) apply(parent);
         visiting.erase(id);
     };
     for (const auto& control : bus.Levels.VolumeControls) apply(control);
-    const auto gain = decibels <= -80 ? 0 : std::pow(10.0f, decibels * 0.05f);
-    if (!std::isfinite(gain)) throw FormatError("Bus gain overflow");
-    return gain;
+    return levels;
 }
 std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
     const auto identity = key(bus, scope);
@@ -46,10 +45,13 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
         const auto parentId = parent == Bank::Guid{} ? 0 : resolve(parent, scope);
         Node node;
         node.Model = model;
-        node.BaseGain = baseGain(*model);
+        const auto levels = baseLevels(*model);
+        node.BaseGain = levels.VolumeDecibels <= -80 ? 0 : std::pow(10.0f, levels.VolumeDecibels * 0.05f);
+        node.BasePitch = std::exp2(levels.PitchSemitones / 12);
         node.AudioId = graph.AddBus(parentId);
         try {
             graph.SetGain(node.AudioId, node.BaseGain);
+            graph.SetPitch(node.AudioId, node.BasePitch);
             attach(node, model->PreEffects, Audio::ProcessingStage::BeforeFader);
             attach(node, model->PostEffects, Audio::ProcessingStage::AfterFader);
             nodes.emplace(identity, node);
@@ -76,5 +78,10 @@ void BusGraph::SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scop
     graph.SetGain(id, nodes.at(key(bus, scope)).BaseGain * volume);
 }
 void BusGraph::Render(float* stereo, std::size_t frames) { graph.Render(stereo, frames); }
+void BusGraph::SetPitch(const Bank::Guid& bus, float pitch, std::uint64_t scope) {
+    if (!std::isfinite(pitch) || pitch <= 0) throw FormatError("Invalid bus pitch");
+    const auto id = Resolve(bus, scope);
+    graph.SetPitch(id, nodes.at(key(bus, scope)).BasePitch * pitch);
+}
 std::optional<std::uint64_t> BusGraph::FramesUntilNextEnd() const { return graph.FramesUntilNextEnd(); }
 }

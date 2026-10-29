@@ -22,10 +22,10 @@ struct VoiceProgress {
 class Voice {
 public:
     Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate);
-    VoiceProgress Mix(float* stereo, std::size_t frames, float masterGain);
+    VoiceProgress Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch = 1);
     void SetGain(float value);
     void SetPitch(float value);
-    std::optional<std::uint64_t> FramesUntilEnd() const;
+    std::optional<std::uint64_t> FramesUntilEnd(float masterPitch = 1) const;
 private:
     struct CachedFrame {
         std::uint64_t Position{};
@@ -33,6 +33,7 @@ private:
         bool Valid{};
     };
     std::array<float, 2> readFrame(std::uint64_t frame);
+    double rateStep(float masterPitch) const;
     std::unique_ptr<IAudioSource> source;
     VoiceSettings settings;
     Format format;

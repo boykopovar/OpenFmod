@@ -42,6 +42,19 @@ private:
 }
 void CheckMixer() {
     using namespace OpenFmod::Audio;
+    Graph pitched(4);
+    const auto parentPitch = pitched.AddBus(0);
+    pitched.SetPitch(parentPitch, 0.5f);
+    const auto childPitch = pitched.AddBus(parentPitch);
+    pitched.SetPitch(childPitch, 4);
+    pitched.GetMixer(childPitch).Play(std::make_unique<Signal>());
+    if (pitched.FramesUntilNextEnd() != 2) throw std::runtime_error("Bus pitch inheritance lost voice duration");
+    std::array<float, 4> pitchOutput{};
+    pitched.Render(pitchOutput.data(), 1);
+    pitched.SetPitch(parentPitch, 0.25f);
+    if (pitched.FramesUntilNextEnd() != 2) throw std::runtime_error("Changing ancestor pitch did not reach active voices");
+    pitched.Render(pitchOutput.data(), 2);
+    if (pitchOutput != std::array<float, 4>{3, 4, 5, 6}) throw std::runtime_error("Changing bus pitch reset voice playback");
     VoiceSettings clipped;
     clipped.StartFrame = 1;
     clipped.EndFrame = 3;

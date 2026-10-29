@@ -11,6 +11,7 @@ public:
     bool Stop(std::uint64_t voice);
     bool IsPlaying(std::uint64_t voice) const;
     void SetGain(float value);
+    void SetPitch(float value);
     void SetVoiceGain(std::uint64_t voice, float value);
     void SetVoicePitch(std::uint64_t voice, float value);
     std::optional<std::uint64_t> FramesUntilNextEnd() const;
@@ -22,6 +23,7 @@ private:
     std::uint64_t nextId{1};
     std::uint32_t rate;
     float gain{1};
+    float pitch{1};
 };
 }
 #endif

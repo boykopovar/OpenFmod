@@ -11,6 +11,7 @@ public:
     void RemoveScope(std::uint64_t scope);
     std::uint64_t Resolve(const Bank::Guid& bus, std::uint64_t scope = 0);
     void SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scope = 0);
+    void SetPitch(const Bank::Guid& bus, float pitch, std::uint64_t scope = 0);
     Audio::Mixer& GetMixer(const Bank::Guid& bus, std::uint64_t scope = 0);
     void Render(float* stereo, std::size_t frames);
     std::optional<std::uint64_t> FramesUntilNextEnd() const;
@@ -25,6 +26,7 @@ private:
         std::uint64_t AudioId{};
         std::shared_ptr<const Bus> Model;
         float BaseGain{1};
+        float BasePitch{1};
         std::map<Bank::Guid, std::shared_ptr<EffectProcessor>> Effects;
         std::map<Bank::Guid, std::shared_ptr<Audio::SignalTap>> Taps;
     };
@@ -32,7 +34,7 @@ private:
     std::uint64_t resolve(const Bank::Guid& bus, std::uint64_t scope);
     void attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage);
     void connect();
-    float baseGain(const Bus& bus) const;
+    MixControls baseLevels(const Bus& bus) const;
     const Library& library;
     std::uint32_t sampleRate;
     Audio::Graph graph;

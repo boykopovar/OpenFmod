@@ -9,6 +9,8 @@ struct Graph::Bus {
     std::uint64_t parent;
     Mixer mixer;
     float gain{1};
+    float pitch{1};
+    float effectivePitch{1};
     std::vector<float> buffer;
     std::vector<std::shared_ptr<IAudioProcessor>> before;
     std::vector<std::shared_ptr<IAudioProcessor>> after;
@@ -27,6 +29,9 @@ std::uint64_t Graph::AddBus(std::uint64_t parent) {
     if (!nextId) throw FormatError("Audio bus identifier overflow");
     const auto id = nextId++;
     buses.emplace(id, std::make_unique<Bus>(sampleRate, parent));
+    auto& node = requireBus(id);
+    node.effectivePitch = requireBus(parent).effectivePitch;
+    node.mixer.SetPitch(node.effectivePitch);
     order.insert(order.begin(), id);
     return id;
 }
@@ -94,6 +99,22 @@ void Graph::AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_p
     auto& node = requireBus(bus);
     auto& chain = stage == ProcessingStage::BeforeFader ? node.before : node.after;
     chain.push_back(std::move(processor));
+}
+void Graph::SetPitch(std::uint64_t bus, float pitch) {
+    requireBus(bus);
+    if (!std::isfinite(pitch) || pitch <= 0) throw FormatError("Invalid audio bus pitch");
+    std::map<std::uint64_t, float> effective;
+    for (const auto& [id, node] : buses) {
+        const auto inherited = id ? effective.at(node->parent) : 1;
+        const auto value = (id == bus ? pitch : node->pitch) * inherited;
+        if (!std::isfinite(value) || value <= 0) throw FormatError("Audio bus pitch overflow");
+        effective.emplace(id, value);
+    }
+    requireBus(bus).pitch = pitch;
+    for (auto& [id, node] : buses) {
+        node->effectivePitch = effective.at(id);
+        node->mixer.SetPitch(node->effectivePitch);
+    }
 }
 void Graph::Render(float* stereo, std::size_t frames) {
     if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) {

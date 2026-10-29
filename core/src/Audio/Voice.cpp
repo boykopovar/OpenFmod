@@ -30,11 +30,18 @@ void Voice::SetPitch(float value) {
     if (!std::isfinite(value) || value <= 0) throw FormatError("Invalid voice pitch");
     settings.Pitch = value;
 }
-std::optional<std::uint64_t> Voice::FramesUntilEnd() const {
+double Voice::rateStep(float masterPitch) const {
+    if (!std::isfinite(masterPitch) || masterPitch <= 0) throw FormatError("Invalid master pitch");
+    const auto result = rateRatio * settings.Pitch * masterPitch;
+    if (!std::isfinite(result) || result <= 0) throw FormatError("Voice rate overflow");
+    return result;
+}
+std::optional<std::uint64_t> Voice::FramesUntilEnd(float masterPitch) const {
+    const auto step = rateStep(masterPitch);
     if (settings.Repeats < 0) return std::nullopt;
     const auto remaining = std::max(0.0, static_cast<double>(endFrame) - position
         + static_cast<double>(settings.Repeats) * (settings.LoopEnd - settings.LoopBegin));
-    const auto frames = std::ceil(remaining / (rateRatio * settings.Pitch));
+    const auto frames = std::ceil(remaining / step);
     if (frames >= static_cast<double>(std::numeric_limits<std::uint64_t>::max() - settings.DelayFrames)) {
         throw FormatError("Voice duration overflow");
     }
@@ -65,11 +72,12 @@ std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
     } else cached.Value = {buffer[offset], buffer[offset + 1]};
     return cached.Value;
 }
-VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
+VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch) {
     if (frames && !stereo) throw FormatError("Missing voice output buffer");
     if (!std::isfinite(masterGain) || masterGain < 0) throw FormatError("Invalid master gain");
     const auto gain = settings.Gain * masterGain;
     if (!std::isfinite(gain)) throw FormatError("Voice gain overflow");
+    const auto step = rateStep(masterPitch);
     std::size_t output = static_cast<std::size_t>(std::min<std::uint64_t>(settings.DelayFrames, frames));
     settings.DelayFrames -= output;
     for (; output < frames; ++output) {
@@ -95,7 +103,7 @@ VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain) {
         for (std::size_t channel = 0; channel < 2; ++channel) {
             stereo[output * 2 + channel] += (first[channel] + (second[channel] - first[channel]) * fraction) * gain;
         }
-        position += rateRatio * settings.Pitch;
+        position += step;
     }
     return {frames, settings.DelayFrames != 0 || settings.Repeats != 0 || position < endFrame};
 }
