@@ -1,5 +1,5 @@
 #include "OpenFmod/Studio/Bus/Graph.hpp"
-#include <cmath>
+#include "OpenFmod/Studio/Levels.hpp"
 namespace OpenFmod::Studio {
 void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage) {
     for (const auto& item : effects) {
@@ -10,7 +10,7 @@ void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::
             graph.AddProcessor(node.AudioId, stage, std::move(processor));
         } else {
             const auto& model = library.Require<Sidechain>(item.Id);
-            const auto gain = model.GainDecibels <= -80 ? 0 : std::pow(10.0f, model.GainDecibels * 0.05f);
+            const auto gain = VolumeGain(model.GainDecibels);
             auto tap = std::make_shared<Audio::SignalTap>();
             tap->SetGain(gain);
             if (!node.Taps.emplace(item.Id, tap).second) throw FormatError("Duplicate sidechain tap");

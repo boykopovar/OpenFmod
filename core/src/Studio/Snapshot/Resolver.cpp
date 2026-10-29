@@ -1,4 +1,5 @@
 #include "OpenFmod/Studio/Snapshot/Resolver.hpp"
+#include "OpenFmod/Studio/Levels.hpp"
 #include <algorithm>
 #include <cmath>
 namespace OpenFmod::Studio {
@@ -9,7 +10,7 @@ float SnapshotResolver::toLinear(float value) const {
     if (!std::isfinite(value)) throw FormatError("Nonfinite snapshot value");
     if (type != AutomationType::Volume) return value;
     if (mapping) value = mapping->Transform(value);
-    return value <= -80 ? 0 : std::pow(10.0f, value * 0.05f);
+    return VolumeGain(value);
 }
 float SnapshotResolver::fromLinear(float value) const {
     if (!std::isfinite(value)) throw FormatError("Snapshot result overflow");

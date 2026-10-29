@@ -9,6 +9,7 @@ add_library(OpenFmod STATIC
     src/Sound/Vorbis/Decoder.cpp
     src/Audio/VorbisSource.cpp
     src/Audio/PcmSource.cpp
+    src/Audio/SilenceSource.cpp
     src/Audio/Voice.cpp
     src/Audio/Mixer.cpp
     src/Audio/Graph.cpp
@@ -30,11 +31,13 @@ add_library(OpenFmod STATIC
     src/Studio/Project/Library.cpp
     src/Studio/Project/Sources.cpp
     src/Studio/Playlist.cpp
+    src/Studio/Levels.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
     src/Studio/Automation/Bindings.cpp
     src/Studio/Automation/Property.cpp
     src/Studio/Automation/Instance.cpp
+    src/Studio/Automation/PropertySet.cpp
     src/Studio/Automation/Resolver.cpp
     src/Studio/Effect/Configuration.cpp
     src/Studio/Effect/PannerConfiguration.cpp

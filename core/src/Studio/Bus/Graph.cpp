@@ -1,4 +1,5 @@
 #include "OpenFmod/Studio/Bus/Graph.hpp"
+#include "OpenFmod/Studio/Levels.hpp"
 #include <cmath>
 namespace OpenFmod::Studio {
 BusGraph::BusGraph(const Library& library, std::uint32_t sampleRate)
@@ -46,8 +47,8 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
         Node node;
         node.Model = model;
         const auto levels = baseLevels(*model);
-        node.BaseGain = levels.VolumeDecibels <= -80 ? 0 : std::pow(10.0f, levels.VolumeDecibels * 0.05f);
-        node.BasePitch = std::exp2(levels.PitchSemitones / 12);
+        node.BaseGain = VolumeGain(levels.VolumeDecibels);
+        node.BasePitch = PitchRatio(levels.PitchSemitones);
         node.AudioId = graph.AddBus(parentId);
         try {
             graph.SetGain(node.AudioId, node.BaseGain);
