@@ -1,4 +1,4 @@
-#include "OpenFmod/Studio/Modulation/EnvelopeState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/EnvelopeState.hpp"
 #include "OpenFmod/Studio/Modulation/Curve.hpp"
 #include <cmath>
 namespace OpenFmod::Studio {

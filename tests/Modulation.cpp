@@ -1,8 +1,9 @@
 #include "OpenFmod/Studio/Modulation/Curve.hpp"
 #include "OpenFmod/Studio/Modulation/Mapping.hpp"
-#include "OpenFmod/Studio/Modulation/EnvelopeState.hpp"
-#include "OpenFmod/Studio/Modulation/FollowerState.hpp"
-#include "OpenFmod/Studio/Modulation/RandomState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/EnvelopeState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/FollowerState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/RandomState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/Instance.hpp"
 #include <cmath>
 #include <stdexcept>
 void CheckModulation() {
@@ -22,6 +23,15 @@ void CheckModulation() {
     held.Release(60);
     if (held.Evaluate(105) != -3 || held.Evaluate(150) != -4 || !held.IsFinished(150)) {
         throw std::runtime_error("Release did not preserve interrupted attack level");
+    }
+    auto scale = std::make_shared<Mapping>(OpenFmod::Bank::Guid{}, std::vector<MappingPoint>{{0, -10}, {100, 10}});
+    Modulation model;
+    model.ValueMode = 1;
+    model.Parameters = envelope;
+    ModulationInstance instance(model, scale, false, false, 0.5f);
+    instance.Release(60);
+    if (!instance.Evaluate(105).IsEnvelope || instance.Evaluate(105).Value != 35 || !instance.IsFinished(150)) {
+        throw std::runtime_error("Mapped envelope instance lost its release state");
     }
     EnvelopeState instant(Envelope{});
     instant.Release(0);

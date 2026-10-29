@@ -1,7 +1,7 @@
 #include "OpenFmod/Studio/Parameter/Model.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
-#include "OpenFmod/Studio/Modulation/SlewState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/SlewState.hpp"
 #include "OpenFmod/Studio/Parameter/State.hpp"
 void CheckParameter() {
     using namespace TestData;

@@ -1,4 +1,4 @@
-#include "OpenFmod/Studio/Modulation/RandomState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/RandomState.hpp"
 #include <cmath>
 namespace OpenFmod::Studio {
 RandomState::RandomState(float amount, RandomRange range, const Mapping* mapping, bool discrete, bool angular)

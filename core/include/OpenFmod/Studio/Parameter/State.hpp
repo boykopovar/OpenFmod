@@ -1,7 +1,7 @@
 #ifndef OPENFMOD_STUDIO_PARAMETER_STATE_HPP
 #define OPENFMOD_STUDIO_PARAMETER_STATE_HPP
 #include "OpenFmod/Studio/Parameter/Model.hpp"
-#include "OpenFmod/Studio/Modulation/SlewState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/SlewState.hpp"
 #include <memory>
 namespace OpenFmod::Studio {
 class ParameterState {

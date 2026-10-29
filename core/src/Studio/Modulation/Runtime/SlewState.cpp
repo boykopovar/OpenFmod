@@ -1,4 +1,4 @@
-#include "OpenFmod/Studio/Modulation/SlewState.hpp"
+#include "OpenFmod/Studio/Modulation/Runtime/SlewState.hpp"
 #include <cmath>
 namespace OpenFmod::Studio {
 SlewState::SlewState(float ascendingSpeed, float descendingSpeed, const Mapping* mapping, bool discrete)

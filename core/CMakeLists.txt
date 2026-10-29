@@ -60,10 +60,11 @@ add_library(OpenFmod STATIC
     src/Studio/Timeline/TempoGrid.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
-    src/Studio/Modulation/EnvelopeState.cpp
-    src/Studio/Modulation/FollowerState.cpp
-    src/Studio/Modulation/RandomState.cpp
-    src/Studio/Modulation/SlewState.cpp
+    src/Studio/Modulation/Runtime/Instance.cpp
+    src/Studio/Modulation/Runtime/EnvelopeState.cpp
+    src/Studio/Modulation/Runtime/FollowerState.cpp
+    src/Studio/Modulation/Runtime/RandomState.cpp
+    src/Studio/Modulation/Runtime/SlewState.cpp
     src/Studio/Modulation/Curve.cpp
     src/Studio/Modulation/Mapping.cpp
 )
