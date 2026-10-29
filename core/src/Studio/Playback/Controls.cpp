@@ -10,6 +10,7 @@ std::map<std::uint32_t, float> InstrumentControls::baseProperties(const Instrume
     base.emplace(6, 0);
     if (const auto* silence = std::get_if<SilenceInstrument>(&model.Definition.Source)) base.emplace(29, silence->DurationMilliseconds);
     if (const auto* event = std::get_if<EventInstrument>(&model.Definition.Source)) base.emplace(3, event->TimelinePositionMilliseconds);
+    if (const auto* command = std::get_if<CommandInstrument>(&model.Definition.Source)) base.emplace(2, command->Value);
     return base;
 }
 InstrumentControls::InstrumentControls(const Library& library, const Instrument& model, const AutomationBindings& bindings, const std::function<float()>& random)
