@@ -1,21 +1,12 @@
 #include "OpenFmod/Studio/Playback/Sound.hpp"
-#include "OpenFmod/Studio/Levels.hpp"
 #include "OpenFmod/Audio/SilenceSource.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
 namespace OpenFmod::Studio {
-std::map<std::uint32_t, float> SoundPlayback::baseProperties(const Instrument& model) {
-    auto base = model.Settings.Properties;
-    base.emplace(4, 1);
-    base.emplace(5, 0);
-    base.emplace(6, 0);
-    if (const auto* silence = std::get_if<SilenceInstrument>(&model.Definition.Source)) base.emplace(29, silence->DurationMilliseconds);
-    return base;
-}
 SoundPlayback::SoundPlayback(const Library& library, SourceLibrary& sources, Audio::Mixer& mixer, const Bank::Guid& instrument, const AutomationBindings& bindings, const std::function<float()>& random, std::uint32_t sampleRate)
     : library(library), sources(sources), mixer(mixer), model(library.Retain<Instrument>(instrument)),
-      properties(library, baseProperties(*model), model->Properties, bindings, random), sampleRate(sampleRate) {
+      properties(library, *model, bindings, random), sampleRate(sampleRate) {
     if (!sampleRate) throw FormatError("Sound playback sample rate is zero");
     if (!std::holds_alternative<WaveInstrument>(model->Definition.Source)
         && !std::holds_alternative<SilenceInstrument>(model->Definition.Source)) throw FormatError("Sound playback requires a wave or silence instrument");
@@ -39,8 +30,8 @@ void SoundPlayback::Start(const SoundStart& start, const AutomationInput& input)
         if (duration < 0) settings.Repeats = -1;
         source = std::make_unique<Audio::SilenceSource>(Audio::Format{sampleRate, 1, sample.Frames});
     }
-    settings.Gain = VolumeGain(properties.Get(0)) * properties.Get(4);
-    settings.Pitch = pitch(input);
+    settings.Gain = properties.GetGain();
+    settings.Pitch = properties.GetPitch(input);
     voice = mixer.Play(std::move(source), settings);
     started = true;
 }
@@ -54,21 +45,8 @@ void SoundPlayback::Update(const AutomationInput& input, double milliseconds, fl
         mixer.Stop(*voice);
         return;
     }
-    mixer.SetVoiceGain(*voice, parentGain * VolumeGain(properties.Get(0)) * properties.Get(4));
-    mixer.SetVoicePitch(*voice, parentPitch * pitch(input));
-}
-float SoundPlayback::pitch(const AutomationInput& input) const {
-    float multiplier = 1;
-    const auto& settings = model->Settings;
-    if (settings.AutoPitchParameter != Bank::Guid{}) {
-        if (!input.Parameters) throw FormatError("Missing automatic pitch parameter input");
-        const auto minimum = library.Require<Parameter>(settings.AutoPitchParameter).Minimum;
-        const auto range = settings.AutoPitchMaximum - minimum;
-        if (range != 0) multiplier = settings.AutoPitchMinimum
-            + (input.Parameters(settings.AutoPitchParameter) - minimum) / range * (1 - settings.AutoPitchMinimum);
-        if (!std::isfinite(multiplier) || multiplier < 0) throw FormatError("Invalid automatic pitch multiplier");
-    }
-    return multiplier * PitchRatio(std::clamp(properties.Get(1), -48.0f, 48.0f));
+    mixer.SetVoiceGain(*voice, parentGain * properties.GetGain());
+    mixer.SetVoicePitch(*voice, parentPitch * properties.GetPitch(input));
 }
 void SoundPlayback::Stop(bool immediate, double milliseconds) {
     if (!started) throw FormatError("Sound playback has not started");
