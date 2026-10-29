@@ -34,6 +34,7 @@ add_library(OpenFmod STATIC
     src/Studio/Automation/Controller.cpp
     src/Studio/Automation/Bindings.cpp
     src/Studio/Automation/Property.cpp
+    src/Studio/Automation/Instance.cpp
     src/Studio/Automation/Resolver.cpp
     src/Studio/Effect/Configuration.cpp
     src/Studio/Effect/PannerConfiguration.cpp
