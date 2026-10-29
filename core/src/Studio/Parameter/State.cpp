@@ -3,15 +3,15 @@
 #include <cmath>
 namespace OpenFmod::Studio {
 namespace {
-const Parameter& RequireModel(const std::shared_ptr<const Parameter>& model) {
+std::shared_ptr<const Parameter> RequireModel(std::shared_ptr<const Parameter> model) {
     if (!model) throw FormatError("Missing parameter model");
     if (!std::isfinite(model->Minimum) || !std::isfinite(model->Maximum)
         || model->Minimum > model->Maximum) throw FormatError("Invalid parameter range");
-    return *model;
+    return model;
 }
 }
 ParameterState::ParameterState(std::shared_ptr<const Parameter> model, float initialValue)
-    : model(std::move(model)), slew(RequireModel(this->model).SeekSpeed,
+    : model(RequireModel(std::move(model))), slew(this->model->SeekSpeed,
         (this->model->Flags & 4) ? this->model->DescendingSeekSpeed : this->model->SeekSpeed,
         nullptr, (this->model->Flags & 8) != 0) {
     assign(initialValue, true);
