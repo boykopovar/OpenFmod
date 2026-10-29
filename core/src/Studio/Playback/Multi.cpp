@@ -7,7 +7,6 @@ MultiPlayback::MultiPlayback(const Library& library, const Bank::Guid& instrumen
       random(std::move(random)), cursor(std::move(cursor)), factory(std::move(factory)) {
     if (!std::holds_alternative<MultiInstrument>(model->Definition.Source) || !model->Variants) throw FormatError("Multi playback requires a playlist instrument");
     if (!this->random || !this->cursor || !this->factory) throw FormatError("Missing playlist playback dependency");
-    if (model->Variants->Entries.empty()) throw FormatError("Cannot play an empty instrument playlist");
 }
 void MultiPlayback::next(const AutomationInput& input, double milliseconds, const SoundStart& offset) {
     const auto mode = model->Variants->PlayMode;
@@ -25,6 +24,11 @@ void MultiPlayback::next(const AutomationInput& input, double milliseconds, cons
 void MultiPlayback::Start(const SoundStart& start, const AutomationInput& input) {
     if (started) throw FormatError("Playlist playback has already started");
     if (start.Repeats < -1 || !std::isfinite(start.OffsetPercent) || start.OffsetPercent < 0 || start.OffsetPercent > 100) throw FormatError("Invalid playlist start position");
+    if (model->Variants->Entries.empty()) {
+        started = true;
+        finished = true;
+        return;
+    }
     controls.Update(input, 0);
     next(input, 0, start);
     repeats = start.Repeats;
