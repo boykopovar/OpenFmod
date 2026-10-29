@@ -2,11 +2,23 @@
 #include "OpenFmod/Studio/Timeline/Transition.hpp"
 #include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
 #include "OpenFmod/Studio/Timeline/Clock.hpp"
+#include "OpenFmod/Studio/Timeline/Bounds.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckTimeline() {
     using namespace TestData;
     using namespace OpenFmod::Studio;
+    TimelineResource bounds;
+    bounds.Definition.Triggered.push_back({{}, 10, 40});
+    bounds.Definition.Markers.push_back({{}, 60, "destination", 10});
+    Transition sequenceTransition;
+    sequenceTransition.Sequence = TransitionSequence{};
+    sequenceTransition.Sequence->Duration = 20;
+    sequenceTransition.Sequence->DestinationOffset = 35;
+    bounds.Transitions.push_back(sequenceTransition);
+    if (TimelineDuration(bounds) != 95 || TimelineEnd(0xfffffff0u, 32) != 0xffffffffu) {
+        throw std::runtime_error("Incorrect timeline transition or saturated endpoint");
+    }
     for (const auto rate : {22050u, 44100u, 48000u, 96000u}) {
         TimelineClock whole(rate), split(rate);
         whole.Advance(rate * 17 + 13);

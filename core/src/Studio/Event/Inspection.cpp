@@ -1,5 +1,5 @@
 #include "OpenFmod/Studio/Event/Inspection.hpp"
-#include <algorithm>
+#include "OpenFmod/Studio/Timeline/Bounds.hpp"
 #include <set>
 namespace OpenFmod::Studio {
 namespace {
@@ -36,10 +36,7 @@ private:
         if (!timeline.Definition.SustainPoints.empty()) return false;
         for (const auto& transition : timeline.Transitions) {
             if (transition.Destination == Bank::Guid{}) continue;
-            const auto& markers = timeline.Definition.Markers;
-            const auto found = std::find_if(markers.begin(), markers.end(), [&](const auto& marker) { return marker.Id == transition.Destination; });
-            if (found == markers.end()) throw FormatError("Timeline transition destination not found");
-            if (found->Position < transition.End) return false;
+            if (RequireMarker(timeline.Definition, transition.Destination).Position < transition.End) return false;
         }
         return true;
     }

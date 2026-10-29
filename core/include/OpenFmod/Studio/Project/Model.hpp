@@ -11,8 +11,7 @@
 #include "OpenFmod/Studio/Modulation/Model.hpp"
 #include "OpenFmod/Studio/Parameter/Model.hpp"
 #include "OpenFmod/Studio/Snapshot/Model.hpp"
-#include "OpenFmod/Studio/Timeline/Model.hpp"
-#include "OpenFmod/Studio/Timeline/Transition.hpp"
+#include "OpenFmod/Studio/Timeline/Resource.hpp"
 #include <memory>
 #include <typeindex>
 namespace OpenFmod::Studio {
@@ -21,11 +20,6 @@ template<class TDefinition>
 struct PropertyModel {
     TDefinition Definition;
     std::map<std::uint32_t, Property> Properties;
-};
-struct TimelineResource {
-    Timeline Definition;
-    std::vector<Transition> Transitions;
-    std::vector<Bank::Guid> Controllers;
 };
 struct Project {
     std::shared_ptr<const std::string> Storage;
