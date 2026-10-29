@@ -2,6 +2,7 @@
 #include "OpenFmod/Sound/Vorbis/State.hpp"
 #include "OpenFmod/Binary/Checksum.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
+#include "OpenFmod/Audio/PcmSource.hpp"
 #include <vorbis/vorbisenc.h>
 #include <cmath>
 #include <stdexcept>
@@ -68,6 +69,20 @@ void checkSignal(int channels, float quality) {
     float tail = 42;
     if (stream.Read(&tail, 1) || tail != 42 || stream.Read(nullptr, 0)) throw std::runtime_error("Decoder read beyond end");
     if (streamed != decoded) throw std::runtime_error("Streaming changed decoded signal");
+    auto pcmData = std::make_shared<Audio::PcmData>();
+    pcmData->Layout = {sample.Rate, sample.Channels, sample.Frames};
+    pcmData->Samples = decoded;
+    Audio::PcmSource first(pcmData), second(pcmData);
+    pcmData.reset();
+    first.Seek(100);
+    std::vector<float> fragment(sample.Channels * 12);
+    if (first.Read(fragment.data(), 12) != 12
+        || !std::equal(fragment.begin(), fragment.end(), decoded.begin() + sample.Channels * 100)) {
+        throw std::runtime_error("PCM seek changed sample data");
+    }
+    if (second.Read(fragment.data(), 12) != 12 || !std::equal(fragment.begin(), fragment.end(), decoded.begin())) {
+        throw std::runtime_error("Shared PCM sources did not retain independent cursors");
+    }
     sample.Data = std::string_view(bytes).substr(0, 1);
     bool rejected = false;
     try { Sound::Vorbis::Decode(sample, registry); }

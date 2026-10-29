@@ -8,6 +8,7 @@ add_library(OpenFmod STATIC
     src/Sound/Vorbis/Setup.cpp
     src/Sound/Vorbis/Decoder.cpp
     src/Audio/VorbisSource.cpp
+    src/Audio/PcmSource.cpp
     src/Audio/Voice.cpp
     src/Audio/Mixer.cpp
     src/Audio/Graph.cpp
@@ -27,6 +28,7 @@ add_library(OpenFmod STATIC
     src/Audio/Filters/MultibandEq.cpp
     src/Studio/Project/Model.cpp
     src/Studio/Project/Library.cpp
+    src/Studio/Project/Sources.cpp
     src/Studio/Playlist.cpp
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
