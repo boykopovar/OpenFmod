@@ -1,11 +1,26 @@
 #include "OpenFmod/Studio/Timeline/Model.hpp"
 #include "OpenFmod/Studio/Timeline/Transition.hpp"
 #include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
+#include "OpenFmod/Studio/Timeline/Clock.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckTimeline() {
     using namespace TestData;
     using namespace OpenFmod::Studio;
+    for (const auto rate : {22050u, 44100u, 48000u, 96000u}) {
+        TimelineClock whole(rate), split(rate);
+        whole.Advance(rate * 17 + 13);
+        for (unsigned index = 0; index < rate * 17 + 13; ++index) split.Advance(1);
+        if (whole.GetTick() != split.GetTick() || whole.GetMilliseconds() != split.GetMilliseconds()) {
+            throw std::runtime_error("Timeline time depends on render block size");
+        }
+        const auto target = whole.GetTick() + 127;
+        const auto distance = whole.FramesUntil(target);
+        whole.Advance(distance - 1);
+        if (whole.GetTick() >= target) throw std::runtime_error("Timeline scheduled a boundary too late");
+        whole.Advance(1);
+        if (whole.GetTick() < target) throw std::runtime_error("Timeline scheduled a boundary too early");
+    }
     TempoGrid standard({});
     if (standard.Quantize(1, QuantizationMode::Bars, 1) != 96000
         || standard.Quantize(12000, QuantizationMode::EighthNotes, 1) != 12000

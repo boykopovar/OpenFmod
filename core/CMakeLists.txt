@@ -33,6 +33,7 @@ add_library(OpenFmod STATIC
     src/Studio/Condition.cpp
     src/Studio/Automation/Controller.cpp
     src/Studio/Automation/Bindings.cpp
+    src/Studio/Automation/Property.cpp
     src/Studio/Automation/Resolver.cpp
     src/Studio/Effect/Configuration.cpp
     src/Studio/Effect/PannerConfiguration.cpp
@@ -53,6 +54,7 @@ add_library(OpenFmod STATIC
     src/Studio/Instrument/Definition.cpp
     src/Studio/Instrument/Model.cpp
     src/Studio/Timeline/Model.cpp
+    src/Studio/Timeline/Clock.cpp
     src/Studio/Timeline/Transition.cpp
     src/Studio/Timeline/Sequence.cpp
     src/Studio/Timeline/TempoGrid.cpp
