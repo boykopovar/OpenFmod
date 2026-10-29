@@ -11,7 +11,7 @@ InstrumentDefinition ReadInstrumentDefinition(std::string_view type, std::string
         result.Source = MultiInstrument{};
     } else if (type == "SLNB") {
         const auto duration = reader.Float();
-        if (!std::isfinite(duration) || duration < 0) throw FormatError("Invalid silence duration");
+        if (!std::isfinite(duration)) throw FormatError("Invalid silence duration");
         result.Source = SilenceInstrument{duration};
     } else if (type == "EVIB") {
         EventInstrument source;

@@ -27,13 +27,13 @@ void Voice::SetGain(float value) {
     settings.Gain = value;
 }
 void Voice::SetPitch(float value) {
-    if (!std::isfinite(value) || value <= 0) throw FormatError("Invalid voice pitch");
+    if (!std::isfinite(value) || value < 0) throw FormatError("Invalid voice pitch");
     settings.Pitch = value;
 }
 double Voice::rateStep(float masterPitch) const {
     if (!std::isfinite(masterPitch) || masterPitch <= 0) throw FormatError("Invalid master pitch");
     const auto result = rateRatio * settings.Pitch * masterPitch;
-    if (!std::isfinite(result) || result <= 0) throw FormatError("Voice rate overflow");
+    if (!std::isfinite(result) || result < 0) throw FormatError("Voice rate overflow");
     return result;
 }
 std::optional<std::uint64_t> Voice::FramesUntilEnd(float masterPitch) const {
@@ -41,6 +41,7 @@ std::optional<std::uint64_t> Voice::FramesUntilEnd(float masterPitch) const {
     if (settings.Repeats < 0) return std::nullopt;
     const auto remaining = std::max(0.0, static_cast<double>(endFrame) - position
         + static_cast<double>(settings.Repeats) * (settings.LoopEnd - settings.LoopBegin));
+    if (!step) return remaining ? std::nullopt : std::optional<std::uint64_t>{settings.DelayFrames};
     const auto frames = std::ceil(remaining / step);
     if (frames >= static_cast<double>(std::numeric_limits<std::uint64_t>::max() - settings.DelayFrames)) {
         throw FormatError("Voice duration overflow");

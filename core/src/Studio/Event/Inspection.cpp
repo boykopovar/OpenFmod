@@ -46,6 +46,7 @@ private:
         bool result = model.Settings.LoopCount != -1;
         if (result) {
             if (std::holds_alternative<ProgrammerInstrument>(model.Definition.Source)) result = false;
+            else if (const auto* silence = std::get_if<SilenceInstrument>(&model.Definition.Source)) result = silence->DurationMilliseconds >= 0;
             else if (const auto* nested = std::get_if<EventInstrument>(&model.Definition.Source)) result = EventOneshot(nested->Event);
             else if (std::holds_alternative<MultiInstrument>(model.Definition.Source)) {
                 if (!model.Variants) throw FormatError("Multi instrument has no playlist");

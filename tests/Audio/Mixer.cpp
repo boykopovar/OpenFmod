@@ -1,5 +1,6 @@
 #include "OpenFmod/Audio/Mixer.hpp"
 #include "OpenFmod/Audio/Graph.hpp"
+#include "OpenFmod/Studio/Playback/Sound.hpp"
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
@@ -42,6 +43,21 @@ private:
 }
 void CheckMixer() {
     using namespace OpenFmod::Audio;
+    OpenFmod::Sound::Sample looped;
+    looped.Rate = 48000;
+    looped.Frames = 8;
+    looped.Repeat = OpenFmod::Sound::Loop{2, 4};
+    auto loopPosition = OpenFmod::Studio::SoundPosition(looped, {7, 0, 2});
+    if (loopPosition.StartFrame != 4 || loopPosition.Repeats != 1 || loopPosition.LoopEnd != 5) {
+        throw std::runtime_error("Sound offset did not consume completed loop iterations");
+    }
+    Voice frozen(std::make_unique<Signal>(), VoiceSettings{}, 4);
+    frozen.SetPitch(0);
+    std::array<float, 4> frozenOutput{};
+    frozen.Mix(frozenOutput.data(), 2, 1);
+    if (frozen.FramesUntilEnd()) throw std::runtime_error("Zero pitch consumed source time");
+    frozen.SetPitch(1);
+    if (frozen.FramesUntilEnd() != 4) throw std::runtime_error("Resuming pitch lost source position");
     Graph pitched(4);
     const auto parentPitch = pitched.AddBus(0);
     pitched.SetPitch(parentPitch, 0.5f);
