@@ -2,7 +2,7 @@ add_executable(OpenFmodChecks Container.cpp Catalog.cpp Sound.cpp Vorbis.cpp Pla
 target_link_libraries(OpenFmodChecks PRIVATE OpenFmod::OpenFmod vorbisenc)
 target_sources(OpenFmodChecks PRIVATE Studio/Playback/Multi.cpp)
 target_sources(OpenFmodChecks PRIVATE Studio/Playback/Command.cpp)
-target_sources(OpenFmodChecks PRIVATE Studio/Playback/Timeline.cpp)
+target_sources(OpenFmodChecks PRIVATE Studio/Playback/Timeline.cpp Studio/Playback/Transport.cpp)
 set_target_properties(OpenFmodChecks PROPERTIES CXX_EXTENSIONS OFF)
 add_test(NAME OpenFmodChecks COMMAND OpenFmodChecks)
 

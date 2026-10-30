@@ -2,7 +2,9 @@
 #include <stdexcept>
 #include "OpenFmod/Studio/Timeline/Bounds.hpp"
 #include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
+void CheckTimelineTransport();
 void CheckTimelineScan() {
+    CheckTimelineTransport();
     using namespace OpenFmod::Studio;
     TempoGrid tempo({{{}, 4, 4, 0, 120}, {{}, 4, 4, 48000, 60}});
     if (tempo.ToBars(0, 96000) != 3 || tempo.ToTicks(0, 3) != 96000
