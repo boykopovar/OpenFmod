@@ -1,4 +1,4 @@
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include <algorithm>
 #include <limits>
 namespace OpenFmod::Studio {

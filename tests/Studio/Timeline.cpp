@@ -1,8 +1,8 @@
 #include "OpenFmod/Studio/Timeline/Model.hpp"
 #include "OpenFmod/Studio/Timeline/Transition.hpp"
-#include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
-#include "OpenFmod/Studio/Timeline/Clock.hpp"
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Timing/TempoGrid.hpp"
+#include "OpenFmod/Studio/Timeline/Timing/Clock.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 void CheckTimeline() {

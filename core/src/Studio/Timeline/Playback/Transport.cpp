@@ -1,5 +1,5 @@
 #include "OpenFmod/Studio/Timeline/Playback/Transport.hpp"
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include <limits>
 namespace OpenFmod::Studio {
 TimelineTransport::TimelineTransport(const TimelineResource& model)

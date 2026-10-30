@@ -1,7 +1,7 @@
-#include "OpenFmod/Studio/Timeline/Scan.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Scan.hpp"
 #include <stdexcept>
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
-#include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Timing/TempoGrid.hpp"
 void CheckTimelineTransport();
 void CheckTimelineSchedule();
 void CheckTimelineScan() {

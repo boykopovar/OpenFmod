@@ -69,17 +69,17 @@ add_library(OpenFmod STATIC
     src/Studio/Instrument/Definition.cpp
     src/Studio/Instrument/Model.cpp
     src/Studio/Timeline/Model.cpp
-    src/Studio/Timeline/Clock.cpp
-    src/Studio/Timeline/Scan.cpp
+    src/Studio/Timeline/Timing/Clock.cpp
+    src/Studio/Timeline/Playback/Scan.cpp
     src/Studio/Timeline/Playback/Transport.cpp
     src/Studio/Timeline/Playback/Overlap.cpp
     src/Studio/Timeline/Playback/Schedule.cpp
-    src/Studio/Timeline/Bounds.cpp
+    src/Studio/Timeline/Playback/Bounds.cpp
     src/Studio/Timeline/Transition.cpp
     src/Studio/Timeline/Sequence.cpp
-    src/Studio/Timeline/TempoGrid.cpp
-    src/Studio/Timeline/TempoConversion.cpp
-    src/Studio/Timeline/Destination.cpp
+    src/Studio/Timeline/Timing/TempoGrid.cpp
+    src/Studio/Timeline/Timing/TempoConversion.cpp
+    src/Studio/Timeline/Playback/Destination.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
     src/Studio/Modulation/Runtime/Instance.cpp

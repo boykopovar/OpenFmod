@@ -1,4 +1,4 @@
-#include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
+#include "OpenFmod/Studio/Timeline/Timing/TempoGrid.hpp"
 #include <algorithm>
 #include <cmath>
 namespace OpenFmod::Studio {

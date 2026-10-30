@@ -1,7 +1,7 @@
 #ifndef OPENFMOD_STUDIO_TIMELINE_SCAN_HPP
 #define OPENFMOD_STUDIO_TIMELINE_SCAN_HPP
 #include "OpenFmod/Studio/Timeline/Resource.hpp"
-#include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
+#include "OpenFmod/Studio/Timeline/Timing/TempoGrid.hpp"
 #include <set>
 namespace OpenFmod::Studio {
 struct LogicPoint {

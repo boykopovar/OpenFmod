@@ -1,5 +1,5 @@
 #include "OpenFmod/Studio/Timeline/Playback/Transport.hpp"
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include <algorithm>
 namespace OpenFmod::Studio {
 std::uint32_t TimelineTransport::advanceSequence(std::uint32_t ticks, const std::function<float(const Bank::Guid&)>& parameters, const std::function<float()>& random, const std::function<void(const TimelineSpan&)>& consume) {

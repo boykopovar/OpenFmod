@@ -1,5 +1,5 @@
 #include "OpenFmod/Studio/Event/Inspection.hpp"
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include <set>
 namespace OpenFmod::Studio {
 namespace {

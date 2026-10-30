@@ -1,4 +1,4 @@
-#include "OpenFmod/Studio/Timeline/Clock.hpp"
+#include "OpenFmod/Studio/Timeline/Timing/Clock.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
 #include <limits>
 namespace OpenFmod::Studio {

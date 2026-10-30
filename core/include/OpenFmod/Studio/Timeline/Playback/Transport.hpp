@@ -1,6 +1,6 @@
 #ifndef OPENFMOD_STUDIO_TIMELINE_PLAYBACK_TRANSPORT_HPP
 #define OPENFMOD_STUDIO_TIMELINE_PLAYBACK_TRANSPORT_HPP
-#include "OpenFmod/Studio/Timeline/Scan.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Scan.hpp"
 #include <array>
 namespace OpenFmod::Studio {
 enum class TimelineRole { Main, Source, Destination, Transition };

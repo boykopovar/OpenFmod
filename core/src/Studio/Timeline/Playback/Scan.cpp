@@ -1,5 +1,5 @@
-#include "OpenFmod/Studio/Timeline/Scan.hpp"
-#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Scan.hpp"
+#include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include <algorithm>
 #include <cmath>
 namespace OpenFmod::Studio {
