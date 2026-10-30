@@ -73,6 +73,7 @@ add_library(OpenFmod STATIC
     src/Studio/Timeline/Scan.cpp
     src/Studio/Timeline/Playback/Transport.cpp
     src/Studio/Timeline/Playback/Overlap.cpp
+    src/Studio/Timeline/Playback/Schedule.cpp
     src/Studio/Timeline/Bounds.cpp
     src/Studio/Timeline/Transition.cpp
     src/Studio/Timeline/Sequence.cpp
