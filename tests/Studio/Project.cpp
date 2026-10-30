@@ -2,6 +2,8 @@
 #include "OpenFmod/Studio/Bus/Graph.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
+#include <cmath>
+#include "OpenFmod/Audio/PcmSource.hpp"
 namespace {
 std::string bus(unsigned char identity, unsigned char parent, const std::string& kind) {
     using namespace TestData;
@@ -83,6 +85,17 @@ void CheckProject() {
     }
     std::array<float, 32> silent{};
     graph.Render(silent.data(), 16);
+    auto pcm = std::make_shared<OpenFmod::Audio::PcmData>();
+    pcm->Layout = {48000, 2, 32};
+    pcm->Samples.assign(64, 1);
+    graph.GetMixer(group, scope1).Play(std::make_unique<OpenFmod::Audio::PcmSource>(pcm));
+    graph.SetVolume(group, 0.5f, scope1);
+    graph.SetSnapshots({{group, 0, {0, -80, 50, false}}});
+    graph.Render(silent.data(), 16);
+    for (const auto value : silent) if (std::abs(value - 0.25f) > 0.0001f) throw std::runtime_error("Snapshot did not preserve user bus volume");
+    graph.SetSnapshots({});
+    graph.Render(silent.data(), 16);
+    for (const auto value : silent) if (std::abs(value - 0.5f) > 0.0001f) throw std::runtime_error("Removing snapshot did not restore bus volume");
     graph.RemoveScope(scope1);
     graph.RemoveScope(scope2);
     const auto retained = library.Retain<Curve>(id);

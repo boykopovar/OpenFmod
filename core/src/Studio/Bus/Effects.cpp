@@ -4,7 +4,9 @@ namespace OpenFmod::Studio {
 void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage) {
     for (const auto& item : effects) {
         if (library.Contains<Effect>(item.Id)) {
-            const auto& model = library.Require<Effect>(item.Id);
+            const auto retained = library.Retain<Effect>(item.Id);
+            node.EffectModels.emplace(item.Id, retained);
+            const auto& model = *retained;
             auto processor = std::make_shared<EffectProcessor>(model, sampleRate);
             if (!node.Effects.emplace(item.Id, processor).second) throw FormatError("Duplicate bus effect");
             graph.AddProcessor(node.AudioId, stage, std::move(processor));

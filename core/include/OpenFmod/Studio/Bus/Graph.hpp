@@ -3,11 +3,13 @@
 #include "OpenFmod/Audio/Graph.hpp"
 #include "OpenFmod/Studio/Project/Library.hpp"
 #include "OpenFmod/Studio/Effect/Processor.hpp"
+#include "OpenFmod/Studio/Snapshot/Mix.hpp"
 namespace OpenFmod::Studio {
 class BusGraph {
 public:
     BusGraph(const Library& library, std::uint32_t sampleRate);
     void Refresh();
+    void SetSnapshots(const std::vector<SnapshotLayer>& layers);
     std::uint64_t CreateScope(const Event& event);
     void RemoveScope(std::uint64_t scope);
     std::uint64_t Resolve(const Bank::Guid& bus, std::uint64_t scope = 0);
@@ -28,6 +30,9 @@ private:
         std::shared_ptr<const Bus> Model;
         float BaseGain{1};
         float BasePitch{1};
+        float UserGain{1};
+        float UserPitch{1};
+        std::map<Bank::Guid, std::shared_ptr<const Effect>> EffectModels;
         std::map<Bank::Guid, std::shared_ptr<EffectProcessor>> Effects;
         std::map<Bank::Guid, std::shared_ptr<Audio::SignalTap>> Taps;
         std::map<Bank::Guid, std::shared_ptr<const Sidechain>> Sidechains;
@@ -36,10 +41,13 @@ private:
     std::uint64_t resolve(const Bank::Guid& bus, std::uint64_t scope);
     void attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage);
     void connect();
+    void applySnapshots(Node& node);
+    float snapshotProperty(const Bank::Guid& target, std::uint32_t id, float base, const std::map<std::uint32_t, Property>& properties, AutomationType type) const;
     MixControls baseLevels(const Bus& bus) const;
     const Library& library;
     std::uint32_t sampleRate;
     Audio::Graph graph;
+    SnapshotMix snapshots;
     std::map<std::uint64_t, Scope> scopes;
     std::map<Key, Node> nodes;
     std::map<Bank::Guid, std::vector<Bank::Guid>> providers;

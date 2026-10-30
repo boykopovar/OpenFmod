@@ -14,12 +14,16 @@ BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
 }
 MixControls BusGraph::baseLevels(const Bus& bus) const {
     auto levels = bus.Levels;
+    snapshots.ValidateTarget(bus.Id, [](auto property) { return property <= 1; });
+    levels.VolumeDecibels = snapshotProperty(bus.Id, 0, levels.VolumeDecibels, bus.Properties, AutomationType::Volume);
+    levels.PitchSemitones = snapshotProperty(bus.Id, 1, levels.PitchSemitones, bus.Properties, AutomationType::Normal);
     std::set<Bank::Guid> visiting;
     std::function<void(const Bank::Guid&)> apply = [&](const Bank::Guid& id) {
         if (!visiting.insert(id).second) throw FormatError("Cyclic volume control routing");
         const auto& control = library.Require<VolumeControl>(id);
-        levels.VolumeDecibels += control.Levels.VolumeDecibels;
-        levels.PitchSemitones += control.Levels.PitchSemitones;
+        snapshots.ValidateTarget(id, [](auto property) { return property <= 1; });
+        levels.VolumeDecibels += snapshotProperty(id, 0, control.Levels.VolumeDecibels, control.Properties, AutomationType::Volume);
+        levels.PitchSemitones += snapshotProperty(id, 1, control.Levels.PitchSemitones, control.Properties, AutomationType::Normal);
         for (const auto& parent : control.Levels.VolumeControls) apply(parent);
         visiting.erase(id);
     };
@@ -46,6 +50,7 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
             graph.SetPitch(node.AudioId, node.BasePitch);
             attach(node, model->PreEffects, Audio::ProcessingStage::BeforeFader);
             attach(node, model->PostEffects, Audio::ProcessingStage::AfterFader);
+            applySnapshots(node);
             nodes.emplace(identity, node);
         } catch (...) {
             graph.RemoveBus(node.AudioId);
@@ -67,13 +72,17 @@ Audio::Mixer& BusGraph::GetMixer(const Bank::Guid& bus, std::uint64_t scope) { r
 void BusGraph::SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scope) {
     if (!std::isfinite(volume) || volume < 0) throw FormatError("Invalid bus volume");
     const auto id = Resolve(bus, scope);
-    graph.SetGain(id, nodes.at(key(bus, scope)).BaseGain * volume);
+    auto& node = nodes.at(key(bus, scope));
+    graph.SetGain(id, node.BaseGain * volume);
+    node.UserGain = volume;
 }
 void BusGraph::Render(float* stereo, std::size_t frames) { graph.Render(stereo, frames); }
 void BusGraph::SetPitch(const Bank::Guid& bus, float pitch, std::uint64_t scope) {
     if (!std::isfinite(pitch) || pitch <= 0) throw FormatError("Invalid bus pitch");
     const auto id = Resolve(bus, scope);
-    graph.SetPitch(id, nodes.at(key(bus, scope)).BasePitch * pitch);
+    auto& node = nodes.at(key(bus, scope));
+    graph.SetPitch(id, node.BasePitch * pitch);
+    node.UserPitch = pitch;
 }
 std::optional<std::uint64_t> BusGraph::FramesUntilNextEnd() const { return graph.FramesUntilNextEnd(); }
 }

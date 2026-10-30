@@ -51,11 +51,14 @@ add_library(OpenFmod STATIC
     src/Studio/Effect/Model.cpp
     src/Studio/Snapshot/Model.cpp
     src/Studio/Snapshot/Resolver.cpp
+    src/Studio/Snapshot/Instance.cpp
+    src/Studio/Snapshot/Mix.cpp
     src/Studio/Bus/Controls.cpp
     src/Studio/Bus/Model.cpp
     src/Studio/Bus/Graph.cpp
     src/Studio/Bus/Effects.cpp
     src/Studio/Bus/Registry.cpp
+    src/Studio/Bus/Snapshots.cpp
     src/Studio/Bus/Scope.cpp
     src/Studio/Parameter/Model.cpp
     src/Studio/Parameter/State.cpp
