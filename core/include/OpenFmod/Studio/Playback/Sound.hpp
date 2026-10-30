@@ -5,10 +5,11 @@
 #include "OpenFmod/Studio/Playback/IPlayback.hpp"
 #include "OpenFmod/Audio/Mixer.hpp"
 namespace OpenFmod::Studio {
+using ProgrammerSoundFactory = std::function<std::unique_ptr<Audio::IAudioSource>(const std::string&)>;
 Audio::VoiceSettings SoundPosition(const Sound::Sample& sample, const SoundStart& start);
 class SoundPlayback final : public IPlayback {
 public:
-    SoundPlayback(const Library& library, SourceLibrary& sources, Audio::Mixer& mixer, const Bank::Guid& instrument, const AutomationBindings& bindings, const std::function<float()>& random, std::uint32_t sampleRate);
+    SoundPlayback(const Library& library, SourceLibrary& sources, Audio::Mixer& mixer, const Bank::Guid& instrument, const AutomationBindings& bindings, const std::function<float()>& random, std::uint32_t sampleRate, ProgrammerSoundFactory programmer = {});
     ~SoundPlayback() override;
     SoundPlayback(const SoundPlayback&) = delete;
     SoundPlayback& operator=(const SoundPlayback&) = delete;
@@ -23,6 +24,7 @@ private:
     std::shared_ptr<const Instrument> model;
     InstrumentControls properties;
     std::uint32_t sampleRate;
+    ProgrammerSoundFactory programmer;
     std::optional<std::uint64_t> voice;
     bool started{};
     bool releasing{};

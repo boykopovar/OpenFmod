@@ -4,12 +4,13 @@
 #include <cmath>
 #include <limits>
 namespace OpenFmod::Studio {
-SoundPlayback::SoundPlayback(const Library& library, SourceLibrary& sources, Audio::Mixer& mixer, const Bank::Guid& instrument, const AutomationBindings& bindings, const std::function<float()>& random, std::uint32_t sampleRate)
+SoundPlayback::SoundPlayback(const Library& library, SourceLibrary& sources, Audio::Mixer& mixer, const Bank::Guid& instrument, const AutomationBindings& bindings, const std::function<float()>& random, std::uint32_t sampleRate, ProgrammerSoundFactory programmer)
     : library(library), sources(sources), mixer(mixer), model(library.Retain<Instrument>(instrument)),
-      properties(library, *model, bindings, random), sampleRate(sampleRate) {
+      properties(library, *model, bindings, random), sampleRate(sampleRate), programmer(std::move(programmer)) {
     if (!sampleRate) throw FormatError("Sound playback sample rate is zero");
     if (!std::holds_alternative<WaveInstrument>(model->Definition.Source)
-        && !std::holds_alternative<SilenceInstrument>(model->Definition.Source)) throw FormatError("Sound playback requires a wave or silence instrument");
+        && !std::holds_alternative<SilenceInstrument>(model->Definition.Source)
+        && !std::holds_alternative<ProgrammerInstrument>(model->Definition.Source)) throw FormatError("Sound playback requires a wave, silence or programmer instrument");
 }
 void SoundPlayback::Start(const SoundStart& start, const AutomationInput& input) {
     if (started) throw FormatError("Sound playback has already started");
@@ -19,6 +20,16 @@ void SoundPlayback::Start(const SoundStart& start, const AutomationInput& input)
     if (const auto* wave = std::get_if<WaveInstrument>(&model->Definition.Source)) {
         settings = SoundPosition(library.Require<Sound::Sample>(wave->Source), start);
         source = sources.Create(wave->Source);
+    } else if (const auto* request = std::get_if<ProgrammerInstrument>(&model->Definition.Source)) {
+        if (!programmer) throw FormatError("Programmer instrument requires a sound provider: " + request->Name);
+        source = programmer(request->Name);
+        if (!source) throw FormatError("Programmer sound provider returned an empty source");
+        const auto format = source->GetFormat();
+        if (format.Frames > std::numeric_limits<std::uint32_t>::max()) throw FormatError("Programmer sound duration overflow");
+        Sound::Sample sample;
+        sample.Rate = format.Rate;
+        sample.Frames = static_cast<std::uint32_t>(format.Frames);
+        settings = SoundPosition(sample, start);
     } else {
         const auto duration = properties.Get(29);
         const auto frames = duration < 0 ? 1 : static_cast<double>(duration) * sampleRate / 1000;

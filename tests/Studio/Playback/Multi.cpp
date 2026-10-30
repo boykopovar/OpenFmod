@@ -3,8 +3,9 @@
 #include "OpenFmod/Studio/Playback/PlaylistState.hpp"
 #include "../../Data/Writer.hpp"
 #include <stdexcept>
+#include "OpenFmod/Audio/PcmSource.hpp"
 namespace {
-std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty) {
+std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, bool programmer = false) {
     using namespace TestData;
     std::string settings(80, '\0');
     Append(settings, 1, 4);
@@ -13,9 +14,10 @@ std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty) 
     settings.append(20, '\0');
     std::string identity(16, '\0');
     identity[0] = static_cast<char>(id);
-    if (!multi) AppendFloat(identity, 7);
-    auto body = std::string(multi ? "MUIT" : "SLNI") + Chunk("INST", settings)
-        + Chunk(multi ? "MUIB" : "SLNB", identity) + Chunk("LIST", "PRPS" + Chunk("LCNT", std::string(4, '\0')));
+    if (programmer) { Append(identity, 4, 2); identity += "tone"; }
+    else if (!multi) AppendFloat(identity, 7);
+    auto body = std::string(programmer ? "PRIT" : multi ? "MUIT" : "SLNI") + Chunk("INST", settings)
+        + Chunk(programmer ? "PRIB" : multi ? "MUIB" : "SLNB", identity) + Chunk("LIST", "PRPS" + Chunk("LCNT", std::string(4, '\0')));
     if (multi) {
         std::string playlist;
         Append(playlist, mode, 4);
@@ -41,6 +43,7 @@ std::string bank(unsigned mode = 0, bool empty = false) {
     auto body = std::string("PROJ") + Chunk("BNKI", std::string(16, '\0')) + Chunk("SNDH", {}) + Chunk("STDT", {}) + Chunk("LIST", "WAVS");
     body += Chunk("LIST", "MUIS" + Chunk("LCNT", count) + instrument(1, true, mode, empty));
     body += Chunk("LIST", "SLNS" + Chunk("LCNT", count) + instrument(2, false, mode, empty));
+    body += Chunk("LIST", "PRIS" + Chunk("LCNT", count) + instrument(3, false, mode, empty, true));
     return Chunk("RIFF", "FEV " + Chunk("FMT ", version) + Chunk("LIST", body));
 }
 }
@@ -76,6 +79,25 @@ void CheckMultiPlayback() {
     };
     run(1);
     run(64);
+    Audio::Mixer programmerMixer(1000);
+    Bank::Guid programmerId{};
+    programmerId[0] = 3;
+    bool supplied = false;
+    SoundPlayback programmer(library, sources, programmerMixer, programmerId, bindings, [] { return 0.5f; }, 1000,
+        [&](const std::string& name) {
+            if (name != "tone") throw std::runtime_error("Programmer instrument changed its resource name");
+            supplied = true;
+            auto pcm = std::make_shared<Audio::PcmData>();
+            pcm->Layout = {1000, 2, 4};
+            pcm->Samples = {1, 1, 2, 2, 3, 3, 4, 4};
+            return std::make_unique<Audio::PcmSource>(pcm);
+        });
+    programmer.Start({48, 0, 0}, {});
+    std::array<float, 6> pcm{};
+    programmerMixer.Render(pcm.data(), 3);
+    if (!supplied || pcm != std::array<float, 6>{2, 2, 3, 3, 4, 4} || programmer.IsPlaying()) {
+        throw std::runtime_error("Programmer audio source was not rendered with its requested offset");
+    }
     for (unsigned mode = 0; mode <= 4; ++mode) {
         Library scopedLibrary;
         scopedLibrary.Load(bank(mode));
