@@ -52,7 +52,7 @@ std::uint32_t TimelineTransport::advanceSequence(std::uint32_t ticks, const std:
         current.Role = TimelineRole::Main;
         sequence.reset();
         scan.Reset();
-        includeStart = true;
+        includeStart = false;
     }
     return count;
 }

@@ -44,6 +44,10 @@ void CheckTimelineTransport() {
     if (spans[4].Cursors[0].Generation != destinationGeneration) throw std::runtime_error("Destination playback restarted at transition completion");
     model.Transitions[0].Sequence.reset();
     model.Definition.Markers[0].Position = 10;
+    model.Transitions[0].Flags = 2;
+    transport.Seek(10);
+    transport.Advance(1, {}, {}, consume);
+    if (transport.GetPosition() != 11) throw std::runtime_error("Point transition retriggered after its own jump");
     model.Transitions[0].Flags = 1;
     transport.Seek(10);
     bool rejected = false;

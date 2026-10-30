@@ -47,6 +47,7 @@ void TimelineTransport::begin(const LogicPoint& point) {
     const auto destination = TransitionDestination(model.Definition, transition, current.Position);
     if (!transition.Sequence || !transition.Sequence->Duration) {
         Seek(destination);
+        includeStart = false;
         return;
     }
     SequenceState state;
