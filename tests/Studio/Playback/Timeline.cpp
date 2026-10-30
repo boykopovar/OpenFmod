@@ -1,7 +1,28 @@
 #include "OpenFmod/Studio/Timeline/Scan.hpp"
 #include <stdexcept>
+#include "OpenFmod/Studio/Timeline/Bounds.hpp"
+#include "OpenFmod/Studio/Timeline/TempoGrid.hpp"
 void CheckTimelineScan() {
     using namespace OpenFmod::Studio;
+    TempoGrid tempo({{{}, 4, 4, 0, 120}, {{}, 4, 4, 48000, 60}});
+    if (tempo.ToBars(0, 96000) != 3 || tempo.ToTicks(0, 3) != 96000
+        || tempo.ToTicks(24000, 2) != 72000) throw std::runtime_error("Musical conversion lost a tempo boundary");
+    Timeline destinationModel;
+    NamedMarker destination;
+    destination.Id[0] = 1;
+    destination.Position = 100;
+    destination.Duration = 20;
+    destinationModel.Markers.push_back(destination);
+    Transition relative;
+    relative.Destination = destination.Id;
+    relative.Start = 10;
+    relative.Flags = 4;
+    if (TransitionDestination(destinationModel, relative, 30) != 119
+        || TransitionDestination(destinationModel, relative, 33) != 103) throw std::runtime_error("Relative transition wrapped incorrectly");
+    relative.Flags |= 8;
+    if (TransitionDestination(destinationModel, relative, 10) != 119
+        || TransitionDestination(destinationModel, relative, 30) != 100
+        || TransitionDestination(destinationModel, relative, 33) != 117) throw std::runtime_error("Reverse relative transition wrapped incorrectly");
     TimelineResource model;
     Transition transition;
     transition.Destination[0] = 1;
@@ -44,4 +65,20 @@ void CheckTimelineScan() {
     if (!quantized || quantized->Tick != 24000 || rolls != 2) throw std::runtime_error("Transition did not retry at the next musical boundary");
     scanner.Reset();
     if (scanner.Find({1, 12000}, {}, [] { return 0.1f; })) throw std::runtime_error("Quantized transition crossed its exclusive window end");
+    TimelineResource simultaneous;
+    Transition first;
+    first.Destination[0] = 1;
+    first.Start = 10;
+    first.End = 10;
+    first.Probability = 100;
+    first.Sequence = TransitionSequence{};
+    first.Sequence->Duration = 100;
+    simultaneous.Transitions.push_back(first);
+    first.Flags = 2;
+    simultaneous.Transitions.push_back(first);
+    TimelineScan ties(simultaneous);
+    if (ties.Find({0, 11}, {}, {})->LeadTransition) throw std::runtime_error("Transition without source overlap accepted a lead");
+    simultaneous.Transitions[0].Sequence->SourceOffset = 5;
+    if (ties.Find({0, 11}, {}, {})->LeadTransition != 1) throw std::runtime_error("Transition source overlap lost its lead");
+
 }

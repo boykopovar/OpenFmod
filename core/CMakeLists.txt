@@ -72,6 +72,8 @@ add_library(OpenFmod STATIC
     src/Studio/Timeline/Transition.cpp
     src/Studio/Timeline/Sequence.cpp
     src/Studio/Timeline/TempoGrid.cpp
+    src/Studio/Timeline/TempoConversion.cpp
+    src/Studio/Timeline/Destination.cpp
     src/Studio/Modulation/Property.cpp
     src/Studio/Modulation/Model.cpp
     src/Studio/Modulation/Runtime/Instance.cpp

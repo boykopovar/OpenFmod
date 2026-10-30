@@ -73,7 +73,7 @@ std::optional<LogicPoint> TimelineScan::Find(const TimelineWindow& window, const
         if (!result || *position < result->Tick) result = LogicPoint{*position, {}, index, {}};
         else if (*position == result->Tick && result->Transition && !result->LeadTransition && (region.Flags & 2)) {
             const auto& selected = timeline.Transitions[*result->Transition];
-            if (selected.Sequence && selected.Sequence->Duration) result->LeadTransition = index;
+            if (selected.Sequence && selected.Sequence->SourceOffset) result->LeadTransition = index;
         }
     }
     return result;
