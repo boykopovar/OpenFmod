@@ -3,15 +3,32 @@
 #include <limits>
 namespace OpenFmod::Studio {
 ParameterScope::ParameterScope(const Library& library) : global(true) {
-    for (auto model : library.GetAll<Parameter>()) {
-        if ((model->Flags & 1) != 0) add(std::move(model), nullptr);
-    }
+    Refresh(library);
 }
 ParameterScope::ParameterScope(const Library& library, const Event& event, ParameterScope& globals) : global(false) {
     if (!globals.global) throw FormatError("Event requires a global parameter scope");
+    globals.Refresh(library);
     for (const auto& id : event.ParameterLayouts) {
         add(library.Retain<Parameter>(library.Require<ParameterLayout>(id).ParameterId), &globals);
     }
+}
+void ParameterScope::Refresh(const Library& library) {
+    if (!global) throw FormatError("Only the global parameter scope can be refreshed");
+    auto updated = *this;
+    updated.entries.clear();
+    updated.names.clear();
+    for (auto model : library.GetAll<Parameter>()) {
+        if ((model->Flags & 1) == 0) continue;
+        if (!updated.names.emplace(model->Name, model->Id).second) throw FormatError("Ambiguous global parameter name");
+        const auto found = entries.find(model->Id);
+        if (found != entries.end()) updated.entries.emplace(model->Id, found->second);
+        else {
+            if (model->Default == std::numeric_limits<float>::max()) throw FormatError("Parameter requires an explicit initial value");
+            updated.entries.emplace(model->Id, Entry{std::make_shared<ParameterState>(model, model->Default), true});
+        }
+    }
+    entries.swap(updated.entries);
+    names.swap(updated.names);
 }
 void ParameterScope::add(std::shared_ptr<const Parameter> model, ParameterScope* globals) {
     if (entries.count(model->Id)) return;

@@ -4,16 +4,7 @@
 namespace OpenFmod::Studio {
 BusGraph::BusGraph(const Library& library, std::uint32_t sampleRate)
     : library(library), sampleRate(sampleRate), graph(sampleRate) {
-    for (const auto& bus : library.GetAll<Bus>()) {
-        for (const auto* chain : {&bus->PreEffects, &bus->PostEffects}) {
-            for (const auto& effect : *chain) {
-                if (library.Contains<Sidechain>(effect.Id)) providers[effect.Id].push_back(bus->Id);
-            }
-        }
-    }
-    for (const auto& control : library.GetAll<Sidechain>()) {
-        for (const auto& effect : control->Effects) controls[effect].push_back(control->Id);
-    }
+    Refresh();
 }
 BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
     if (!scope) return {0, bus};

@@ -3,6 +3,7 @@
 namespace OpenFmod::Studio {
 std::uint64_t BusGraph::CreateScope(const Event& event) {
     if (!nextScope) throw FormatError("Bus scope identifier overflow");
+    Refresh();
     const auto id = nextScope++;
     Scope scope{event.MasterBus, event.InputBus, {event.MasterBus}};
     scope.Local.insert(event.Groups.begin(), event.Groups.end());

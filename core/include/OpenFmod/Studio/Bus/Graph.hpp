@@ -7,6 +7,7 @@ namespace OpenFmod::Studio {
 class BusGraph {
 public:
     BusGraph(const Library& library, std::uint32_t sampleRate);
+    void Refresh();
     std::uint64_t CreateScope(const Event& event);
     void RemoveScope(std::uint64_t scope);
     std::uint64_t Resolve(const Bank::Guid& bus, std::uint64_t scope = 0);
@@ -29,6 +30,7 @@ private:
         float BasePitch{1};
         std::map<Bank::Guid, std::shared_ptr<EffectProcessor>> Effects;
         std::map<Bank::Guid, std::shared_ptr<Audio::SignalTap>> Taps;
+        std::map<Bank::Guid, std::shared_ptr<const Sidechain>> Sidechains;
     };
     Key key(const Bank::Guid& bus, std::uint64_t scope) const;
     std::uint64_t resolve(const Bank::Guid& bus, std::uint64_t scope);

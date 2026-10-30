@@ -7,6 +7,7 @@ class ParameterScope {
 public:
     explicit ParameterScope(const Library& library);
     ParameterScope(const Library& library, const Event& event, ParameterScope& globals);
+    void Refresh(const Library& library);
     float GetValue(const Bank::Guid& id) const;
     float GetTarget(const Bank::Guid& id) const;
     Bank::Guid FindId(const std::string& name) const;

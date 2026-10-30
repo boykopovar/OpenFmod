@@ -55,6 +55,7 @@ add_library(OpenFmod STATIC
     src/Studio/Bus/Model.cpp
     src/Studio/Bus/Graph.cpp
     src/Studio/Bus/Effects.cpp
+    src/Studio/Bus/Registry.cpp
     src/Studio/Bus/Scope.cpp
     src/Studio/Parameter/Model.cpp
     src/Studio/Parameter/State.cpp
