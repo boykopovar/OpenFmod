@@ -23,6 +23,7 @@ void CheckSnapshot();
 void CheckProject();
 void CheckMultiPlayback();
 void CheckPlaybackCommands();
+void CheckTimelineScan();
 int main() {
     CheckCatalog();
     CheckSound();
@@ -45,6 +46,7 @@ int main() {
     CheckProject();
     CheckMultiPlayback();
     CheckPlaybackCommands();
+    CheckTimelineScan();
     std::string bytes = "RIFF";
     bytes.append("\x10\0\0\0", 4);
     bytes += "FEV LIST";

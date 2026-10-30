@@ -66,6 +66,7 @@ add_library(OpenFmod STATIC
     src/Studio/Instrument/Model.cpp
     src/Studio/Timeline/Model.cpp
     src/Studio/Timeline/Clock.cpp
+    src/Studio/Timeline/Scan.cpp
     src/Studio/Timeline/Bounds.cpp
     src/Studio/Timeline/Transition.cpp
     src/Studio/Timeline/Sequence.cpp
