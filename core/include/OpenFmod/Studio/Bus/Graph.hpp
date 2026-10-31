@@ -10,7 +10,7 @@ public:
     BusGraph(const Library& library, std::uint32_t sampleRate);
     void Refresh();
     void SetSnapshots(const std::vector<SnapshotLayer>& layers);
-    std::uint64_t CreateScope(const Event& event);
+    std::uint64_t CreateScope(const Event& event, std::uint64_t parentScope = 0, std::optional<Bank::Guid> input = {});
     void RemoveScope(std::uint64_t scope);
     std::uint64_t Resolve(const Bank::Guid& bus, std::uint64_t scope = 0);
     void SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scope = 0);
@@ -24,6 +24,7 @@ private:
         Bank::Guid Master;
         Bank::Guid Input;
         std::set<Bank::Guid> Local;
+        std::uint64_t Parent{};
     };
     struct Node {
         std::uint64_t AudioId{};

@@ -10,7 +10,8 @@ BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
     if (!scope) return {0, bus};
     const auto found = scopes.find(scope);
     if (found == scopes.end()) throw FormatError("Unknown bus scope");
-    return {found->second.Local.count(bus) ? scope : 0, bus};
+    if (found->second.Local.count(bus)) return {scope, bus};
+    return key(bus, found->second.Parent);
 }
 MixControls BusGraph::baseLevels(const Bus& bus) const {
     auto levels = bus.Levels;
@@ -37,8 +38,13 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
     try {
         const auto model = library.Retain<Bus>(bus);
         auto parent = model->Routing.Bus;
-        if (identity.first && scopes.at(identity.first).Master == bus) parent = scopes.at(identity.first).Input;
-        const auto parentId = parent == Bank::Guid{} ? 0 : resolve(parent, scope);
+        auto parentScope = identity.first;
+        if (identity.first && scopes.at(identity.first).Master == bus) {
+            const auto& owner = scopes.at(identity.first);
+            parent = owner.Input;
+            parentScope = owner.Parent;
+        }
+        const auto parentId = parent == Bank::Guid{} ? 0 : resolve(parent, parentScope);
         Node node;
         node.Model = model;
         const auto levels = baseLevels(*model);

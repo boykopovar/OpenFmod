@@ -1,11 +1,12 @@
 #include "OpenFmod/Studio/Bus/Graph.hpp"
 #include <algorithm>
 namespace OpenFmod::Studio {
-std::uint64_t BusGraph::CreateScope(const Event& event) {
+std::uint64_t BusGraph::CreateScope(const Event& event, std::uint64_t parentScope, std::optional<Bank::Guid> input) {
     if (!nextScope) throw FormatError("Bus scope identifier overflow");
+    if (parentScope && !scopes.count(parentScope)) throw FormatError("Unknown parent bus scope");
     Refresh();
     const auto id = nextScope++;
-    Scope scope{event.MasterBus, event.InputBus, {event.MasterBus}};
+    Scope scope{event.MasterBus, input.value_or(event.InputBus), {event.MasterBus}, parentScope};
     scope.Local.insert(event.Groups.begin(), event.Groups.end());
     scopes.emplace(id, std::move(scope));
     try {
@@ -20,6 +21,10 @@ std::uint64_t BusGraph::CreateScope(const Event& event) {
 }
 void BusGraph::RemoveScope(std::uint64_t scope) {
     if (!scopes.count(scope)) throw FormatError("Unknown bus scope");
+    for (const auto& [id, child] : scopes) {
+        if (child.Parent == scope) throw FormatError("Cannot remove a bus scope with nested events");
+        static_cast<void>(id);
+    }
     std::vector<std::uint64_t> removed;
     for (const auto& [identity, node] : nodes) if (identity.first == scope) removed.push_back(node.AudioId);
     for (auto edge = connections.begin(); edge != connections.end();) {

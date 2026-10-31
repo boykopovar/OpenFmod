@@ -96,6 +96,16 @@ void CheckProject() {
     graph.SetSnapshots({});
     graph.Render(silent.data(), 16);
     for (const auto value : silent) if (std::abs(value - 0.5f) > 0.0001f) throw std::runtime_error("Removing snapshot did not restore bus volume");
+    const auto nested = graph.CreateScope(event, scope1, group);
+    graph.GetMixer(group, nested).Play(std::make_unique<OpenFmod::Audio::PcmSource>(pcm));
+    graph.SetVolume(group, 0.25f, nested);
+    graph.Render(silent.data(), 16);
+    for (const auto value : silent) if (std::abs(value - 0.125f) > 0.0001f) throw std::runtime_error("Nested event bypassed its parent track");
+    bool parentRejected = false;
+    try { graph.RemoveScope(scope1); }
+    catch (const OpenFmod::FormatError&) { parentRejected = true; }
+    if (!parentRejected) throw std::runtime_error("Removing parent scope invalidated a nested event");
+    graph.RemoveScope(nested);
     graph.RemoveScope(scope1);
     graph.RemoveScope(scope2);
     const auto retained = library.Retain<Curve>(id);
