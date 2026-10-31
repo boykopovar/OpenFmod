@@ -1,4 +1,6 @@
 #include "OpenFmod/Studio/Playback/Multi.hpp"
+#include "OpenFmod/Studio/Event/Playback/Instruments.hpp"
+#include "../../Data/EventControl.hpp"
 #include "OpenFmod/Studio/Playback/Sound.hpp"
 #include "OpenFmod/Studio/Playback/PlaylistState.hpp"
 #include "../../Data/Writer.hpp"
@@ -88,6 +90,28 @@ void CheckMultiPlayback() {
     if (endingMixer.FramesUntilNextEnd() != 4) throw std::runtime_error("Asynchronous instrument end cut its active iteration");
     endingMixer.Render(endingOutput.data(), 4);
     if (ending.IsPlaying()) throw std::runtime_error("Asynchronous instrument end kept looping");
+    Audio::Mixer scheduledMixer(1000);
+    TestData::EventControl commands;
+    PlaylistState playlists(library);
+    InstrumentFactory factory(library, sources, bindings, playlists, [] { return 0.5f; }, 1000,
+        [&](const auto&) -> Audio::Mixer& { return scheduledMixer; },
+        [](const auto&, const auto&) -> std::unique_ptr<IEventVoice> { throw std::runtime_error("Unexpected nested event"); }, commands);
+    EventInstruments scheduled(library, bindings, factory, [] { return 0.0f; }, [](auto tick, auto, auto) { return tick; });
+    const TimelineTrigger first{1, 0, false};
+    const TimelineTrigger second{1, 1, false};
+    scheduled.Activate(first, id, 0, {}, 0);
+    scheduled.Update({}, 0);
+    scheduled.Activate(second, id, 0, {}, 0);
+    if (scheduled.NextStart()) throw std::runtime_error("Instrument instance limit accepted an overlapping launch");
+    scheduled.Update({}, 0);
+    scheduledMixer.Render(endingOutput.data(), 3);
+    scheduled.Update({}, 144);
+    scheduled.Deactivate(first, 144);
+    scheduled.Deactivate(second, 144);
+    if (scheduledMixer.FramesUntilNextEnd() != 4) throw std::runtime_error("Timeline end cut asynchronous playlist audio");
+    scheduledMixer.Render(endingOutput.data(), 4);
+    scheduled.Update({}, 336);
+    if (scheduled.IsPlaying()) throw std::runtime_error("Scheduled playlist did not finish");
     Audio::Mixer programmerMixer(1000);
     Bank::Guid programmerId{};
     programmerId[0] = 3;

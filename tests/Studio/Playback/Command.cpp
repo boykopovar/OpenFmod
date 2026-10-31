@@ -1,24 +1,10 @@
 #include "OpenFmod/Studio/Playback/Control/Command.hpp"
 #include <limits>
 #include <stdexcept>
-namespace {
-class Target final : public OpenFmod::Studio::IEventControl {
-public:
-    void StartEvent(const OpenFmod::Bank::Guid& event) override { Started = event; }
-    void StopEvents(const OpenFmod::Bank::Guid& event, bool immediate) override { Stopped = event; Immediate = immediate; }
-    float GetParameter(const OpenFmod::Bank::Guid&) const override { return Value; }
-    const OpenFmod::Studio::Parameter& GetParameterModel(const OpenFmod::Bank::Guid&) const override { return Model; }
-    void SetParameter(const OpenFmod::Bank::Guid&, float value) override { Value = value; }
-    OpenFmod::Studio::Parameter Model;
-    OpenFmod::Bank::Guid Started{};
-    OpenFmod::Bank::Guid Stopped{};
-    float Value{};
-    bool Immediate{};
-};
-}
+#include "../../Data/EventControl.hpp"
 void CheckPlaybackCommands() {
     using namespace OpenFmod::Studio;
-    Target target;
+    TestData::EventControl target;
     CommandInstrument command;
     command.Target[0] = 7;
     command.Type = 4;
