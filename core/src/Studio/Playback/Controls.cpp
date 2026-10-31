@@ -22,6 +22,12 @@ InstrumentControls::InstrumentControls(const Library& library, const Instrument&
     : properties(library, baseProperties(model), model.Properties, bindings, random), autoPitchParameter(model.Settings.AutoPitchParameter),
       autoPitchMaximum(model.Settings.AutoPitchMaximum), autoPitchMinimum(model.Settings.AutoPitchMinimum) {
     if (autoPitchParameter != Bank::Guid{}) parameterMinimum = library.Require<Parameter>(autoPitchParameter).Minimum;
+    for (const auto& [id, property] : model.Properties) {
+        for (const auto& modulator : property.Modulators) {
+            if (std::holds_alternative<Envelope>(library.Require<PropertyModel<Modulation>>(modulator).Definition.Parameters)) envelope = true;
+        }
+        static_cast<void>(id);
+    }
 }
 void InstrumentControls::Update(const AutomationInput& input, double milliseconds) { properties.Update(input, milliseconds); }
 float InstrumentControls::Get(std::uint32_t id) const { return properties.Get(id); }
@@ -39,4 +45,5 @@ float InstrumentControls::GetPitch(const AutomationInput& input) const {
 }
 void InstrumentControls::Release(double milliseconds) { properties.Release(milliseconds); }
 bool InstrumentControls::IsFinished(double milliseconds) const { return properties.IsFinished(milliseconds); }
+bool InstrumentControls::HasEnvelope() const { return envelope; }
 }

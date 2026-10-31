@@ -57,4 +57,9 @@ void NestedPlayback::Stop(bool immediate, double milliseconds) {
     }
 }
 bool NestedPlayback::IsPlaying() const { return started && child->IsPlaying(); }
+void NestedPlayback::End(bool cutOff, double milliseconds) {
+    if (!started || !std::isfinite(milliseconds) || milliseconds < lastUpdate) throw FormatError("Invalid nested event end time");
+    if (controls.HasEnvelope()) Stop(false, milliseconds);
+    else child->End(cutOff || (model->Settings.Flags & 1));
+}
 }

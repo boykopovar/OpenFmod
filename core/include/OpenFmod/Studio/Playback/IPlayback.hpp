@@ -13,6 +13,7 @@ public:
     virtual void Start(const SoundStart& start, const AutomationInput& input) = 0;
     virtual void Update(const AutomationInput& input, double milliseconds, float parentGain = 1, float parentPitch = 1) = 0;
     virtual void Stop(bool immediate, double milliseconds) = 0;
+    virtual void End(bool cutOff, double milliseconds) = 0;
     virtual bool IsPlaying() const = 0;
 };
 }

@@ -70,5 +70,11 @@ void SoundPlayback::Stop(bool immediate, double milliseconds) {
     }
 }
 bool SoundPlayback::IsPlaying() const { return voice && mixer.IsPlaying(*voice); }
+void SoundPlayback::End(bool cutOff, double milliseconds) {
+    if (!started || !std::isfinite(milliseconds) || milliseconds < 0) throw FormatError("Invalid sound end time");
+    if (!IsPlaying()) return;
+    if (cutOff || (model->Settings.Flags & 1) || properties.HasEnvelope()) Stop(false, milliseconds);
+    else mixer.Finish(*voice);
+}
 SoundPlayback::~SoundPlayback() { if (voice) mixer.Stop(*voice); }
 }

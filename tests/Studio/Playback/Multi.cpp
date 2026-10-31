@@ -79,6 +79,15 @@ void CheckMultiPlayback() {
     };
     run(1);
     run(64);
+    Audio::Mixer endingMixer(1000);
+    SoundPlayback ending(library, sources, endingMixer, Bank::Guid{2}, bindings, [] { return 0.5f; }, 1000);
+    ending.Start({0, 0, -1}, {});
+    std::array<float, 14> endingOutput{};
+    endingMixer.Render(endingOutput.data(), 3);
+    ending.End(false, 3);
+    if (endingMixer.FramesUntilNextEnd() != 4) throw std::runtime_error("Asynchronous instrument end cut its active iteration");
+    endingMixer.Render(endingOutput.data(), 4);
+    if (ending.IsPlaying()) throw std::runtime_error("Asynchronous instrument end kept looping");
     Audio::Mixer programmerMixer(1000);
     Bank::Guid programmerId{};
     programmerId[0] = 3;

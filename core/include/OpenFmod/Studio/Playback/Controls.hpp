@@ -11,6 +11,7 @@ public:
     float GetPitch(const AutomationInput& input) const;
     void Release(double milliseconds);
     bool IsFinished(double milliseconds) const;
+    bool HasEnvelope() const;
 private:
     static std::map<std::uint32_t, float> baseProperties(const Instrument& model);
     PropertySet properties;
@@ -18,6 +19,7 @@ private:
     float parameterMinimum{};
     float autoPitchMaximum{};
     float autoPitchMinimum{};
+    bool envelope{};
 };
 }
 #endif

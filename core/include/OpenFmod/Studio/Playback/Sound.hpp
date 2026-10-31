@@ -16,6 +16,7 @@ public:
     void Start(const SoundStart& start, const AutomationInput& input) override;
     void Update(const AutomationInput& input, double milliseconds, float parentGain = 1, float parentPitch = 1) override;
     void Stop(bool immediate, double milliseconds) override;
+    void End(bool cutOff, double milliseconds) override;
     bool IsPlaying() const override;
 private:
     const Library& library;

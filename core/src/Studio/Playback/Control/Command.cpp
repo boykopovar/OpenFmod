@@ -49,5 +49,6 @@ void CommandPlayback::Update(const AutomationInput&, double milliseconds, float 
         || !std::isfinite(parentPitch) || parentPitch < 0) throw FormatError("Invalid command playback update");
 }
 void CommandPlayback::Stop(bool, double milliseconds) { Update({}, milliseconds); }
+void CommandPlayback::End(bool, double milliseconds) { Update({}, milliseconds); }
 bool CommandPlayback::IsPlaying() const { return false; }
 }

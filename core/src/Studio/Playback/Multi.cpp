@@ -73,4 +73,13 @@ void MultiPlayback::Stop(bool immediate, double milliseconds) {
     }
 }
 bool MultiPlayback::IsPlaying() const { return started && !finished && (child->IsPlaying() || (!releasing && repeats != 0)); }
+void MultiPlayback::End(bool cutOff, double milliseconds) {
+    if (!started || !std::isfinite(milliseconds) || milliseconds < lastUpdate) throw FormatError("Invalid playlist end time");
+    if (finished) return;
+    if (cutOff || (model->Settings.Flags & 1) || controls.HasEnvelope()) Stop(false, milliseconds);
+    else {
+        repeats = 0;
+        child->End(false, milliseconds - childStart);
+    }
+}
 }

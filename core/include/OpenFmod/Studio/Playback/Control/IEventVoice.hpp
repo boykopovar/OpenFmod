@@ -10,6 +10,7 @@ public:
     virtual ~IEventVoice() = default;
     virtual void Start(const SoundStart& position) = 0;
     virtual void Stop(bool immediate) = 0;
+    virtual void End(bool cutOff) = 0;
     virtual bool IsPlaying() const = 0;
     virtual void SetMix(float gain, float pitch) = 0;
     virtual void SetParameter(const Bank::Guid& parameter, float value) = 0;
