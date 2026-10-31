@@ -9,6 +9,7 @@ struct SnapshotContribution {
     float Intensity{};
     bool Additive{};
     SnapshotResolution Resolution{SnapshotResolution::Average};
+    bool operator==(const SnapshotContribution& other) const;
 };
 class SnapshotResolver {
 public:

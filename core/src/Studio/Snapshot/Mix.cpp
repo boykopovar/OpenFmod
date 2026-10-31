@@ -1,7 +1,10 @@
 #include "OpenFmod/Studio/Snapshot/Mix.hpp"
 #include <cmath>
 namespace OpenFmod::Studio {
-void SnapshotMix::SetLayers(const std::vector<SnapshotLayer>& layers) {
+bool SnapshotContribution::operator==(const SnapshotContribution& other) const {
+    return Priority == other.Priority && Value == other.Value && Intensity == other.Intensity && Additive == other.Additive && Resolution == other.Resolution;
+}
+bool SnapshotMix::SetLayers(const std::vector<SnapshotLayer>& layers) {
     decltype(values) updated;
     for (const auto& layer : layers) {
         const auto& value = layer.Contribution;
@@ -9,7 +12,9 @@ void SnapshotMix::SetLayers(const std::vector<SnapshotLayer>& layers) {
             || (value.Resolution != SnapshotResolution::Average && value.Resolution != SnapshotResolution::Replace)) throw FormatError("Invalid snapshot mix layer");
         updated[layer.Target][layer.Property].push_back(value);
     }
+    if (values == updated) return false;
     values.swap(updated);
+    return true;
 }
 float SnapshotMix::Resolve(const Bank::Guid& target, std::uint32_t property, float base, AutomationType type, const Mapping* mapping) const {
     const auto found = values.find(target);

@@ -35,7 +35,7 @@ void BusGraph::applySnapshots(Node& node) {
     }
 }
 void BusGraph::SetSnapshots(const std::vector<SnapshotLayer>& layers) {
-    snapshots.SetLayers(layers);
+    if (!snapshots.SetLayers(layers)) return;
     for (auto& [key, node] : nodes) {
         applySnapshots(node);
         static_cast<void>(key);
