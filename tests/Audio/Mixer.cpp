@@ -158,6 +158,15 @@ void CheckMixer() {
     settings.Repeats = -1;
     settings.LoopBegin = 0;
     settings.LoopEnd = 4;
+    for (std::size_t consumed : {2, 4, 5}) {
+        const auto ending = mixer.Play(std::make_unique<Signal>(), settings);
+        mixer.Render(result.data(), consumed);
+        mixer.Finish(ending);
+        const auto remaining = consumed % 4 == 0 ? 0 : 4 - consumed % 4;
+        if (mixer.FramesUntilNextEnd() != remaining) throw std::runtime_error("Loop end lost the current iteration boundary");
+        mixer.Render(result.data(), remaining);
+        if (mixer.IsPlaying(ending)) throw std::runtime_error("Finished loop continued repeating");
+    }
     const auto loop = mixer.Play(std::make_unique<Signal>(), settings);
     mixer.Render(result.data(), 8);
     if (!mixer.IsPlaying(loop) || !mixer.Stop(loop) || mixer.IsPlaying(loop)) throw std::runtime_error("Loop could not be stopped");

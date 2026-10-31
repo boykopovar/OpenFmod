@@ -25,6 +25,7 @@ public:
     VoiceProgress Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch = 1);
     void SetGain(float value);
     void SetPitch(float value);
+    void Finish();
     std::optional<std::uint64_t> FramesUntilEnd(float masterPitch = 1) const;
 private:
     struct CachedFrame {
@@ -34,6 +35,7 @@ private:
     };
     std::array<float, 2> readFrame(std::uint64_t frame);
     double rateStep(float masterPitch) const;
+    void advanceLoop();
     std::unique_ptr<IAudioSource> source;
     VoiceSettings settings;
     Format format;

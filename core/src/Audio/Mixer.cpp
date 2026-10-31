@@ -19,6 +19,10 @@ bool Mixer::Stop(std::uint64_t voice) {
     std::lock_guard<std::mutex> lock(mutex);
     return voices.erase(voice) != 0;
 }
+void Mixer::Finish(std::uint64_t voice) {
+    std::lock_guard<std::mutex> lock(mutex);
+    requireVoice(voice).Finish();
+}
 bool Mixer::IsPlaying(std::uint64_t voice) const {
     std::lock_guard<std::mutex> lock(mutex);
     const auto found = voices.find(voice);

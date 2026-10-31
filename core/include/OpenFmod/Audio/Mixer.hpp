@@ -9,6 +9,7 @@ public:
     explicit Mixer(std::uint32_t rate);
     std::uint64_t Play(std::unique_ptr<IAudioSource> source, VoiceSettings settings = {});
     bool Stop(std::uint64_t voice);
+    void Finish(std::uint64_t voice);
     bool IsPlaying(std::uint64_t voice) const;
     void SetGain(float value);
     void SetPitch(float value);

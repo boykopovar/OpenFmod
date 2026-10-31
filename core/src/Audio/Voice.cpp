@@ -36,6 +36,29 @@ double Voice::rateStep(float masterPitch) const {
     if (!std::isfinite(result) || result < 0) throw FormatError("Voice rate overflow");
     return result;
 }
+void Voice::advanceLoop() {
+    if (!settings.Repeats || position < settings.LoopEnd) return;
+    const auto length = settings.LoopEnd - settings.LoopBegin;
+    const auto traversals = std::floor((position - settings.LoopBegin) / length);
+    if (settings.Repeats < 0 || traversals < settings.Repeats) {
+        position = settings.LoopBegin + std::fmod(position - settings.LoopBegin, length);
+        if (settings.Repeats > 0) settings.Repeats -= static_cast<std::int32_t>(traversals);
+    } else {
+        position -= static_cast<double>(settings.Repeats) * length;
+        settings.Repeats = 0;
+    }
+}
+void Voice::Finish() {
+    if (settings.Repeats != -1) return;
+    if (position == settings.LoopEnd) {
+        settings.Repeats = 0;
+        endFrame = settings.LoopEnd;
+        return;
+    }
+    advanceLoop();
+    settings.Repeats = 0;
+    endFrame = settings.LoopEnd;
+}
 std::optional<std::uint64_t> Voice::FramesUntilEnd(float masterPitch) const {
     const auto step = rateStep(masterPitch);
     if (settings.Repeats < 0) return std::nullopt;
@@ -82,17 +105,7 @@ VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, fl
     std::size_t output = static_cast<std::size_t>(std::min<std::uint64_t>(settings.DelayFrames, frames));
     settings.DelayFrames -= output;
     for (; output < frames; ++output) {
-        if (settings.Repeats && position >= settings.LoopEnd) {
-            const auto length = settings.LoopEnd - settings.LoopBegin;
-            const auto traversals = std::floor((position - settings.LoopBegin) / length);
-            if (settings.Repeats < 0 || traversals < settings.Repeats) {
-                position = settings.LoopBegin + std::fmod(position - settings.LoopBegin, length);
-                if (settings.Repeats > 0) settings.Repeats -= static_cast<std::int32_t>(traversals);
-            } else {
-                position -= static_cast<double>(settings.Repeats) * length;
-                settings.Repeats = 0;
-            }
-        }
+        advanceLoop();
         if (position >= endFrame) return {output, false};
         const auto frame = static_cast<std::uint64_t>(position);
         const auto fraction = static_cast<float>(position - frame);
