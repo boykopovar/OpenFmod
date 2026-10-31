@@ -16,6 +16,6 @@ public:
     virtual void SetParameter(const Bank::Guid& parameter, float value) = 0;
     virtual void SetSnapshotIntensity(float percent) = 0;
 };
-using EventVoiceFactory = std::function<std::unique_ptr<IEventVoice>(const Bank::Guid&)>;
+using EventVoiceFactory = std::function<std::shared_ptr<IEventVoice>(const Bank::Guid&)>;
 }
 #endif

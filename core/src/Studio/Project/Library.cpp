@@ -75,6 +75,10 @@ Bank::Guid Library::FindId(const std::string& path) const {
     if (found == paths.end()) throw FormatError("Unknown bank resource path: " + path);
     return found->second;
 }
+std::string Library::GetPath(const Bank::Guid& id) const {
+    for (const auto& [path, value] : paths) if (value == id) return path;
+    throw FormatError("Resource path is not present in loaded string banks");
+}
 const Library::Entry& Library::requireEntry(const ResourceKey& key) const {
     const auto found = objects.find(key);
     if (found == objects.end()) throw FormatError("Missing project resource owner");

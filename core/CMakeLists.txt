@@ -69,6 +69,11 @@ add_library(OpenFmod STATIC
     src/Studio/Event/Inspection.cpp
     src/Studio/Event/Playback/Instruments.cpp
     src/Studio/Event/Playback/Scheduling.cpp
+    src/Studio/Runtime/System.cpp
+    src/Studio/Runtime/Context.cpp
+    src/Studio/Runtime/Event.cpp
+    src/Studio/Runtime/State.cpp
+    src/Studio/Runtime/Timeline.cpp
     src/Studio/Instrument/Settings.cpp
     src/Studio/Instrument/Definition.cpp
     src/Studio/Instrument/Model.cpp

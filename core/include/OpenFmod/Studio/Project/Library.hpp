@@ -11,6 +11,7 @@ public:
     Bank::Guid Load(std::string bytes);
     void Unload(const Bank::Guid& id);
     Bank::Guid FindId(const std::string& path) const;
+    std::string GetPath(const Bank::Guid& id) const;
     template<class TValue>
     bool Contains(const Bank::Guid& id) const {
         return objects.count(ResourceKey{typeid(TValue), id}) != 0;

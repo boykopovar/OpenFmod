@@ -7,7 +7,7 @@
 #include <set>
 namespace OpenFmod::Studio {
 using MixerResolver = std::function<Audio::Mixer&(const Bank::Guid&)>;
-using RoutedEventFactory = std::function<std::unique_ptr<IEventVoice>(const Bank::Guid&, const Bank::Guid&)>;
+using RoutedEventFactory = std::function<std::shared_ptr<IEventVoice>(const Bank::Guid&, const Bank::Guid&)>;
 class InstrumentFactory {
 public:
     InstrumentFactory(const Library& library, SourceLibrary& sources, const AutomationBindings& bindings, PlaylistState& playlists, std::function<float()> random, std::uint32_t sampleRate, MixerResolver mixers, RoutedEventFactory events, IEventControl& commands, ProgrammerSoundFactory programmer = {});

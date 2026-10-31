@@ -1,6 +1,9 @@
 #include "OpenFmod/Studio/Playback/Multi.hpp"
 #include "OpenFmod/Studio/Event/Playback/Instruments.hpp"
 #include "../../Data/EventControl.hpp"
+#include "../../Data/Bank.hpp"
+#include "OpenFmod/Studio/Runtime/System.hpp"
+#include "OpenFmod/Studio/Runtime/Event.hpp"
 #include "OpenFmod/Studio/Playback/Sound.hpp"
 #include "OpenFmod/Studio/Playback/PlaylistState.hpp"
 #include "../../Data/Writer.hpp"
@@ -10,9 +13,13 @@ namespace {
 std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, bool programmer = false) {
     using namespace TestData;
     std::string settings(80, '\0');
+    std::string probability;
+    AppendFloat(probability, 100);
+    settings.replace(36, 4, probability);
     Append(settings, 1, 4);
     Append(settings, 24, 2);
     settings.append(24, '\0');
+    if (id != 2) settings[86] = 11;
     settings.append(20, '\0');
     std::string identity(16, '\0');
     identity[0] = static_cast<char>(id);
@@ -36,6 +43,31 @@ std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, 
     }
     return Chunk("LIST", body);
 }
+std::string event(unsigned char id, unsigned char source) {
+    using namespace TestData;
+    std::string bytes(80, '\0');
+    bytes[0] = static_cast<char>(id);
+    bytes[64] = 11;
+    Append(bytes, 4, 4);
+    Append(bytes, 128, 4);
+    Append(bytes, 0, 5);
+    Append(bytes, 1, 2);
+    Append(bytes, 0, 4);
+    AppendFloat(bytes, 0);
+    Append(bytes, 2, 4);
+    AppendFloat(bytes, 0);
+    Append(bytes, 0x1800, 4);
+    Append(bytes, 1, 2);
+    Append(bytes, 0, 2);
+    Append(bytes, 3, 2);
+    Append(bytes, 16, 2);
+    std::string instrument(16, '\0');
+    instrument[0] = static_cast<char>(source);
+    bytes += instrument;
+    AppendFloat(bytes, 0);
+    AppendFloat(bytes, 0);
+    return Chunk("LIST", "EVNT" + Chunk("EVTB", bytes) + Chunk("LIST", "PRPS" + Chunk("LCNT", std::string(4, '\0'))));
+}
 std::string bank(unsigned mode = 0, bool empty = false) {
     using namespace TestData;
     std::string version;
@@ -46,6 +78,10 @@ std::string bank(unsigned mode = 0, bool empty = false) {
     body += Chunk("LIST", "MUIS" + Chunk("LCNT", count) + instrument(1, true, mode, empty));
     body += Chunk("LIST", "SLNS" + Chunk("LCNT", count) + instrument(2, false, mode, empty));
     body += Chunk("LIST", "PRIS" + Chunk("LCNT", count) + instrument(3, false, mode, empty, true));
+    body += Chunk("LIST", "MBSS" + Chunk("LCNT", count) + Bus(11, 0, "MB"));
+    std::string events;
+    Append(events, 2, 4);
+    body += Chunk("LIST", "EVTS" + Chunk("LCNT", events) + event(4, 1) + event(5, 3));
     return Chunk("RIFF", "FEV " + Chunk("FMT ", version) + Chunk("LIST", body));
 }
 }
@@ -131,6 +167,26 @@ void CheckMultiPlayback() {
     if (!supplied || pcm != std::array<float, 6>{2, 2, 3, 3, 4, 4} || programmer.IsPlaying()) {
         throw std::runtime_error("Programmer audio source was not rendered with its requested offset");
     }
+    System runtime(1000);
+    runtime.LoadBank(bank());
+    runtime.SetProgrammerSoundFactory([](const auto&) {
+        auto pcm = std::make_shared<Audio::PcmData>();
+        pcm->Layout = {1000, 2, 4};
+        pcm->Samples = {1, 1, 2, 2, 3, 3, 4, 4};
+        return std::make_unique<Audio::PcmSource>(pcm);
+    });
+    auto instance = runtime.CreateInstance(Bank::Guid{5});
+    instance->SetMix(0.5f, 1);
+    instance->Start();
+    std::array<float, 12> rendered{};
+    runtime.Render(rendered.data(), 6);
+    if (instance->IsPlaying() || rendered != std::array<float, 12>{0.5f, 0.5f, 1, 1, 1.5f, 1.5f, 2, 2, 0, 0}) {
+        throw std::runtime_error("Runtime event lost routing, gain, audio or natural completion");
+    }
+    instance->Start();
+    instance->Stop(true);
+    runtime.Render(rendered.data(), 6);
+    for (auto value : rendered) if (value != 0) throw std::runtime_error("Stopped runtime event emitted audio");
     for (unsigned mode = 0; mode <= 4; ++mode) {
         Library scopedLibrary;
         scopedLibrary.Load(bank(mode));
