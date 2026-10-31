@@ -18,7 +18,7 @@ struct ParameterOverride {
 };
 struct EventInstrument {
     Bank::Guid Event{};
-    float TimelinePositionMilliseconds{};
+    float SnapshotIntensity{};
     std::vector<ParameterOverride> Parameters;
 };
 struct ProgrammerInstrument {

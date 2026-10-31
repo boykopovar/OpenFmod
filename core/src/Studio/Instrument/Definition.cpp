@@ -16,8 +16,8 @@ InstrumentDefinition ReadInstrumentDefinition(std::string_view type, std::string
     } else if (type == "EVIB") {
         EventInstrument source;
         source.Event = Bank::ReadGuid(reader);
-        source.TimelinePositionMilliseconds = reader.Float();
-        if (!std::isfinite(source.TimelinePositionMilliseconds)) throw FormatError("Nonfinite event instrument position");
+        source.SnapshotIntensity = reader.Float();
+        if (!std::isfinite(source.SnapshotIntensity)) throw FormatError("Nonfinite nested snapshot intensity");
         for (const auto entryBytes : reader.Elements(24)) {
             Binary::Reader entry(entryBytes);
             ParameterOverride parameter;

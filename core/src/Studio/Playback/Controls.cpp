@@ -9,7 +9,12 @@ std::map<std::uint32_t, float> InstrumentControls::baseProperties(const Instrume
     base.emplace(5, 0);
     base.emplace(6, 0);
     if (const auto* silence = std::get_if<SilenceInstrument>(&model.Definition.Source)) base.emplace(29, silence->DurationMilliseconds);
-    if (const auto* event = std::get_if<EventInstrument>(&model.Definition.Source)) base.emplace(3, event->TimelinePositionMilliseconds);
+    if (const auto* event = std::get_if<EventInstrument>(&model.Definition.Source)) {
+        base.emplace(3, event->SnapshotIntensity);
+        for (const auto& parameter : event->Parameters) {
+            if (parameter.PropertyId < 1000 || !base.emplace(parameter.PropertyId, parameter.Value).second) throw FormatError("Invalid nested event parameter property");
+        }
+    }
     if (const auto* command = std::get_if<CommandInstrument>(&model.Definition.Source)) base.emplace(2, command->Value);
     return base;
 }
