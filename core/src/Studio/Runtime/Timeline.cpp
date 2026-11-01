@@ -42,10 +42,10 @@ void EventState::Update() {
     }
     if (Snapshot) Snapshot->Update(input, static_cast<double>(now - started) / 48);
     if (State != PlaybackState::Stopping) State = Transport && Transport->IsSustaining() ? PlaybackState::Sustaining : PlaybackState::Playing;
-    const bool completed = !Instruments->IsPlaying() && (!Snapshot || !Snapshot->IsPlaying());
-    if (completed && (State == PlaybackState::Stopping || ((Oneshot || ending) && Position >= duration && State != PlaybackState::Sustaining))) {
-        State = PlaybackState::Stopped;
-    }
+    const bool audioFinished = !Instruments->IsPlaying();
+    const bool mayFinish = (Model->Definition.Flags & 2) == 0 || ending;
+    if (State != PlaybackState::Stopping && mayFinish && audioFinished && Position >= duration && State != PlaybackState::Sustaining) Stop(false);
+    if (State == PlaybackState::Stopping && audioFinished && (!Snapshot || !Snapshot->IsPlaying())) State = PlaybackState::Stopped;
 }
 std::optional<std::uint64_t> EventState::NextBoundary() const {
     if (State == PlaybackState::Stopped) return {};

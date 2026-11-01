@@ -43,7 +43,7 @@ std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, 
     }
     return Chunk("LIST", body);
 }
-std::string event(unsigned char id, unsigned char source, unsigned maximum, unsigned stealing, float cooldown) {
+std::string event(unsigned char id, unsigned char source, unsigned maximum, unsigned stealing, float cooldown, unsigned flags) {
     using namespace TestData;
     std::string bytes(80, '\0');
     bytes[0] = static_cast<char>(id);
@@ -56,7 +56,7 @@ std::string event(unsigned char id, unsigned char source, unsigned maximum, unsi
     AppendFloat(bytes, 0);
     Append(bytes, stealing, 4);
     AppendFloat(bytes, cooldown);
-    Append(bytes, 0x1800, 4);
+    Append(bytes, flags, 4);
     Append(bytes, 1, 2);
     Append(bytes, 0, 2);
     Append(bytes, 3, 2);
@@ -68,7 +68,7 @@ std::string event(unsigned char id, unsigned char source, unsigned maximum, unsi
     AppendFloat(bytes, 0);
     return Chunk("LIST", "EVNT" + Chunk("EVTB", bytes) + Chunk("LIST", "PRPS" + Chunk("LCNT", std::string(4, '\0'))));
 }
-std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, unsigned stealing = 2, float cooldown = 0) {
+std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, unsigned stealing = 2, float cooldown = 0, unsigned flags = 0x1800) {
     using namespace TestData;
     std::string version;
     Append(version, 142, 4);
@@ -81,7 +81,7 @@ std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, un
     body += Chunk("LIST", "MBSS" + Chunk("LCNT", count) + Bus(11, 0, "MB"));
     std::string events;
     Append(events, 2, 4);
-    body += Chunk("LIST", "EVTS" + Chunk("LCNT", events) + event(4, 1, maximum, stealing, cooldown) + event(5, 3, maximum, stealing, cooldown));
+    body += Chunk("LIST", "EVTS" + Chunk("LCNT", events) + event(4, 1, maximum, stealing, cooldown, flags) + event(5, 3, maximum, stealing, cooldown, flags));
     return Chunk("RIFF", "FEV " + Chunk("FMT ", version) + Chunk("LIST", body));
 }
 }
@@ -217,6 +217,15 @@ void CheckMultiPlayback() {
     try { coolingSecond->Start(); } catch (const FormatError&) { rejected = true; }
     if (!rejected) throw std::runtime_error("Reloaded bank revived an invalidated instance");
     cooling.UnloadBank(Bank::Guid{});
+    System persistent(1000);
+    persistent.LoadBank(bank(0, false, 4, 2, 0, 0x1802));
+    auto sustained = persistent.CreateInstance(Bank::Guid{4});
+    sustained->Start();
+    persistent.Render(silence.data(), 10);
+    if (!sustained->IsPlaying()) throw std::runtime_error("Persistent event stopped after its audio ended");
+    sustained->End(false);
+    persistent.Render(silence.data(), 1);
+    if (sustained->IsPlaying()) throw std::runtime_error("Natural ending retained a persistent event");
     for (unsigned mode = 0; mode <= 4; ++mode) {
         Library scopedLibrary;
         scopedLibrary.Load(bank(mode));
