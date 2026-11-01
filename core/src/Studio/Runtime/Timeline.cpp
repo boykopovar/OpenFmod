@@ -6,8 +6,7 @@ void EventState::Prepare(std::uint32_t ticks) {
     spans.clear();
     std::uint64_t elapsed = 0;
     Transport->Advance(ticks, Input().Parameters, [this] { return Context->Random(); }, [&](const auto& span) {
-        if (span.Sequence && (!span.Sequence->Curves.empty() || !span.Sequence->SourceFades.empty()
-            || !span.Sequence->DestinationFades.empty() || !span.Sequence->CurveReplacements.empty())) {
+        if (span.Sequence && (!span.Sequence->Curves.empty() || !span.Sequence->CurveReplacements.empty())) {
             throw FormatError("Transition playback requires per cursor automation bindings");
         }
         spans.push_back({begin + elapsed, span});
@@ -31,6 +30,7 @@ void EventState::Update() {
         Position = cursor->Position + (cursor->Advancing ? static_cast<std::uint32_t>(now - span.Tick) : 0);
         break;
     }
+    updateCursors(now);
     const auto input = Input();
     updateMix(input, static_cast<double>(now - started) / 48);
     Instruments->Update(input, now);

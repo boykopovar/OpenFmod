@@ -73,6 +73,7 @@ add_library(OpenFmod STATIC
     src/Studio/Runtime/Context.cpp
     src/Studio/Runtime/Admission.cpp
     src/Studio/Runtime/Mix.cpp
+    src/Studio/Runtime/Cursors.cpp
     src/Studio/Runtime/Event.cpp
     src/Studio/Runtime/State.cpp
     src/Studio/Runtime/Timeline.cpp

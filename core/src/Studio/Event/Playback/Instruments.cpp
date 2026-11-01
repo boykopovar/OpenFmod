@@ -2,8 +2,8 @@
 #include <algorithm>
 #include <cmath>
 namespace OpenFmod::Studio {
-EventInstruments::EventInstruments(const Library& library, const AutomationBindings& bindings, InstrumentFactory& factory, std::function<float()> random, InstrumentQuantizer quantize)
-    : library(library), bindings(bindings), factory(factory), random(std::move(random)), quantize(std::move(quantize)) {
+EventInstruments::EventInstruments(const Library& library, const AutomationBindings& bindings, InstrumentFactory& factory, std::function<float()> random, InstrumentQuantizer quantize, InstrumentFrameProvider frames)
+    : library(library), bindings(bindings), factory(factory), random(std::move(random)), quantize(std::move(quantize)), frames(std::move(frames)) {
     if (!this->random || !this->quantize) throw FormatError("Missing instrument scheduling dependency");
 }
 void EventInstruments::checkTime(std::uint64_t tick) {
@@ -51,12 +51,13 @@ void EventInstruments::Update(const AutomationInput& input, std::uint64_t tick) 
     }
     for (auto it = instances.begin(); it != instances.end();) {
         if (it->Due > tick) { ++it; continue; }
+        const auto frame = frames ? frames(it->Key, it->Model->Definition.Id) : InstrumentFrame{input, 1};
         if (!it->Started) {
             it->Playback = factory.Create(it->Model->Definition.Id);
-            it->Playback->Start({it->Offset, 0, it->Model->Settings.LoopCount}, input);
+            it->Playback->Start({it->Offset, 0, it->Model->Settings.LoopCount}, frame.Input);
             it->Started = true;
         }
-        it->Playback->Update(input, static_cast<double>(tick - it->Due) / 48);
+        it->Playback->Update(frame.Input, static_cast<double>(tick - it->Due) / 48, frame.Gain);
         if (!it->Playback->IsPlaying()) it = instances.erase(it);
         else ++it;
     }

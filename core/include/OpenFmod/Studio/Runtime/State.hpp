@@ -43,6 +43,16 @@ public:
     float Intensity{100};
     std::uint32_t Position{};
 private:
+    struct CursorFrame {
+        std::uint32_t Position{};
+        TimelineRole Role{};
+        const TransitionSequence* Sequence{};
+        std::uint32_t SequencePosition{};
+        std::uint64_t SequenceGeneration{};
+    };
+    void updateCursors(std::uint64_t tick);
+    InstrumentFrame instrumentFrame(const TimelineTrigger& trigger, const Bank::Guid& instrument) const;
+    std::map<std::uint64_t, CursorFrame> cursors;
     void initializeMix();
     void updateMix(const AutomationInput& input, double milliseconds);
     bool mixFinished(double milliseconds) const;

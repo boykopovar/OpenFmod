@@ -39,6 +39,7 @@ void EventState::Start(const SoundStart& position) {
     Stop(true);
     actions.clear();
     spans.clear();
+    cursors.clear();
     ending = false;
     started = updated = Context->Clock.GetTick();
     plannedUntil = started;
@@ -58,7 +59,7 @@ void EventState::Start(const SoundStart& position) {
             if (tick < now) throw FormatError("Quantized event time is in the past");
             const auto target = static_cast<std::uint64_t>(Position) + tick - now;
             return tick + TempoGrid(Timeline->Definition.Tempo).Quantize(target, static_cast<QuantizationMode>(mode), interval) - target;
-        });
+        }, [this](const auto& trigger, const auto& instrument) { return instrumentFrame(trigger, instrument); });
     if (Model->Definition.Snapshot != Bank::Guid{}) {
         Snapshot = std::make_unique<SnapshotInstance>(Context->Resources, Model->Definition.Snapshot, Bindings, [this] { return Context->Random(); });
         Snapshot->SetIntensity(Intensity);

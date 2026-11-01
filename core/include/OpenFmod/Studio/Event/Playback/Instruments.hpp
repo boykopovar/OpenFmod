@@ -5,9 +5,14 @@
 #include <list>
 namespace OpenFmod::Studio {
 using InstrumentQuantizer = std::function<std::uint64_t(std::uint64_t, std::uint32_t, std::uint32_t)>;
+struct InstrumentFrame {
+    AutomationInput Input;
+    float Gain{1};
+};
+using InstrumentFrameProvider = std::function<InstrumentFrame(const TimelineTrigger&, const Bank::Guid&)>;
 class EventInstruments {
 public:
-    EventInstruments(const Library& library, const AutomationBindings& bindings, InstrumentFactory& factory, std::function<float()> random, InstrumentQuantizer quantize);
+    EventInstruments(const Library& library, const AutomationBindings& bindings, InstrumentFactory& factory, std::function<float()> random, InstrumentQuantizer quantize, InstrumentFrameProvider frames = {});
     void Activate(const TimelineTrigger& key, const Bank::Guid& instrument, std::uint32_t offset, const AutomationInput& input, std::uint64_t tick);
     void Deactivate(const TimelineTrigger& key, std::uint64_t tick);
     void Update(const AutomationInput& input, std::uint64_t tick);
@@ -38,6 +43,7 @@ private:
     InstrumentFactory& factory;
     std::function<float()> random;
     InstrumentQuantizer quantize;
+    InstrumentFrameProvider frames;
     std::map<TimelineTrigger, Trigger> triggers;
     std::list<Instance> instances;
     std::uint64_t lastTick{};
