@@ -73,6 +73,15 @@ void CheckProject() {
     graph.SetSnapshots({});
     graph.Render(silent.data(), 16);
     for (const auto value : silent) if (std::abs(value - 0.5f) > 0.0001f) throw std::runtime_error("Removing snapshot did not restore bus volume");
+    graph.GetMixer(group, scope1).Play(std::make_unique<OpenFmod::Audio::PcmSource>(pcm));
+    graph.SetLevels(group, -6.0206f, 0, scope1);
+    graph.Render(silent.data(), 16);
+    for (const auto value : silent) if (std::abs(value - 0.25f) > 0.0001f) throw std::runtime_error("Animated bus gain replaced user volume");
+    graph.SetSnapshots({{group, 0, {0, -80, 50, false}}});
+    graph.Render(silent.data(), 16);
+    for (const auto value : silent) if (std::abs(value - 0.125f) > 0.0001f) throw std::runtime_error("Snapshot ignored animated bus gain");
+    graph.SetSnapshots({});
+    graph.SetLevels(group, 0, 0, scope1);
     const auto nested = graph.CreateScope(event, scope1, group);
     graph.GetMixer(group, nested).Play(std::make_unique<OpenFmod::Audio::PcmSource>(pcm));
     graph.SetVolume(group, 0.25f, nested);

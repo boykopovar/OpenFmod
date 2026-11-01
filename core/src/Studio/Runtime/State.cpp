@@ -63,6 +63,7 @@ void EventState::Start(const SoundStart& position) {
         Snapshot = std::make_unique<SnapshotInstance>(Context->Resources, Model->Definition.Snapshot, Bindings, [this] { return Context->Random(); });
         Snapshot->SetIntensity(Intensity);
     }
+    initializeMix();
     State = PlaybackState::Playing;
     std::size_t index = 0;
     for (const auto& instrument : Model->Definition.Instruments) Instruments->Activate({0, index++, false}, instrument, 0, Input(), started);
@@ -72,6 +73,7 @@ void EventState::Stop(bool immediate) {
     if (State == PlaybackState::Stopped) return;
     const auto tick = Context->Clock.GetTick();
     Instruments->Stop(immediate, tick);
+    for (auto& entry : mix) entry.second->Release(static_cast<double>(tick - started) / 48);
     if (Snapshot) Snapshot->Stop(immediate, static_cast<double>(tick - started) / 48);
     actions.clear();
     State = immediate ? PlaybackState::Stopped : PlaybackState::Stopping;

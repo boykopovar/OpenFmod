@@ -43,6 +43,10 @@ public:
     float Intensity{100};
     std::uint32_t Position{};
 private:
+    void initializeMix();
+    void updateMix(const AutomationInput& input, double milliseconds);
+    bool mixFinished(double milliseconds) const;
+    std::map<Bank::Guid, std::unique_ptr<PropertySet>> mix;
     struct Action { std::uint64_t Tick; TimelineAction Value; };
     struct Span { std::uint64_t Tick; TimelineSpan Value; };
     std::deque<Action> actions;

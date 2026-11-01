@@ -32,6 +32,7 @@ void EventState::Update() {
         break;
     }
     const auto input = Input();
+    updateMix(input, static_cast<double>(now - started) / 48);
     Instruments->Update(input, now);
     while (!actions.empty() && actions.front().Tick <= now) {
         const auto action = actions.front().Value;
@@ -45,7 +46,7 @@ void EventState::Update() {
     const bool audioFinished = !Instruments->IsPlaying();
     const bool mayFinish = (Model->Definition.Flags & 2) == 0 || ending;
     if (State != PlaybackState::Stopping && mayFinish && audioFinished && Position >= duration && State != PlaybackState::Sustaining) Stop(false);
-    if (State == PlaybackState::Stopping && audioFinished && (!Snapshot || !Snapshot->IsPlaying())) State = PlaybackState::Stopped;
+    if (State == PlaybackState::Stopping && audioFinished && mixFinished(static_cast<double>(now - started) / 48) && (!Snapshot || !Snapshot->IsPlaying())) State = PlaybackState::Stopped;
 }
 std::optional<std::uint64_t> EventState::NextBoundary() const {
     if (State == PlaybackState::Stopped) return {};

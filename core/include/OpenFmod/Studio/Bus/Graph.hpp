@@ -14,6 +14,7 @@ public:
     void RemoveScope(std::uint64_t scope);
     std::uint64_t Resolve(const Bank::Guid& bus, std::uint64_t scope = 0);
     void SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scope = 0);
+    void SetLevels(const Bank::Guid& bus, float decibels, float semitones, std::uint64_t scope);
     void SetPitch(const Bank::Guid& bus, float pitch, std::uint64_t scope = 0);
     Audio::Mixer& GetMixer(const Bank::Guid& bus, std::uint64_t scope = 0);
     void Render(float* stereo, std::size_t frames);
@@ -31,6 +32,7 @@ private:
         std::shared_ptr<const Bus> Model;
         float BaseGain{1};
         float BasePitch{1};
+        std::optional<MixControls> AnimatedLevels;
         float UserGain{1};
         float UserPitch{1};
         std::map<Bank::Guid, std::shared_ptr<const Effect>> EffectModels;
@@ -44,7 +46,7 @@ private:
     void connect();
     void applySnapshots(Node& node);
     float snapshotProperty(const Bank::Guid& target, std::uint32_t id, float base, const std::map<std::uint32_t, Property>& properties, AutomationType type) const;
-    MixControls baseLevels(const Bus& bus) const;
+    MixControls baseLevels(const Bus& bus, const std::optional<MixControls>& animated = {}) const;
     const Library& library;
     std::uint32_t sampleRate;
     Audio::Graph graph;

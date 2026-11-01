@@ -13,8 +13,8 @@ BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
     if (found->second.Local.count(bus)) return {scope, bus};
     return key(bus, found->second.Parent);
 }
-MixControls BusGraph::baseLevels(const Bus& bus) const {
-    auto levels = bus.Levels;
+MixControls BusGraph::baseLevels(const Bus& bus, const std::optional<MixControls>& animated) const {
+    auto levels = animated.value_or(bus.Levels);
     snapshots.ValidateTarget(bus.Id, [](auto property) { return property <= 1; });
     levels.VolumeDecibels = snapshotProperty(bus.Id, 0, levels.VolumeDecibels, bus.Properties, AutomationType::Volume);
     levels.PitchSemitones = snapshotProperty(bus.Id, 1, levels.PitchSemitones, bus.Properties, AutomationType::Normal);
