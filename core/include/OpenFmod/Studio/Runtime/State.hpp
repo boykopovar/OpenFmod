@@ -34,6 +34,7 @@ public:
     std::unique_ptr<InstrumentFactory> Factory;
     std::unique_ptr<EventInstruments> Instruments;
     PlaybackState State{PlaybackState::Stopped};
+    std::uint64_t LaunchOrder{};
     bool Oneshot{};
     float Gain{1};
     float Pitch{1};

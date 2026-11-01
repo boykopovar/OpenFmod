@@ -43,19 +43,19 @@ std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, 
     }
     return Chunk("LIST", body);
 }
-std::string event(unsigned char id, unsigned char source) {
+std::string event(unsigned char id, unsigned char source, unsigned maximum, unsigned stealing, float cooldown) {
     using namespace TestData;
     std::string bytes(80, '\0');
     bytes[0] = static_cast<char>(id);
     bytes[64] = 11;
-    Append(bytes, 4, 4);
+    Append(bytes, maximum, 4);
     Append(bytes, 128, 4);
     Append(bytes, 0, 5);
     Append(bytes, 1, 2);
     Append(bytes, 0, 4);
     AppendFloat(bytes, 0);
-    Append(bytes, 2, 4);
-    AppendFloat(bytes, 0);
+    Append(bytes, stealing, 4);
+    AppendFloat(bytes, cooldown);
     Append(bytes, 0x1800, 4);
     Append(bytes, 1, 2);
     Append(bytes, 0, 2);
@@ -68,7 +68,7 @@ std::string event(unsigned char id, unsigned char source) {
     AppendFloat(bytes, 0);
     return Chunk("LIST", "EVNT" + Chunk("EVTB", bytes) + Chunk("LIST", "PRPS" + Chunk("LCNT", std::string(4, '\0'))));
 }
-std::string bank(unsigned mode = 0, bool empty = false) {
+std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, unsigned stealing = 2, float cooldown = 0) {
     using namespace TestData;
     std::string version;
     Append(version, 142, 4);
@@ -81,7 +81,7 @@ std::string bank(unsigned mode = 0, bool empty = false) {
     body += Chunk("LIST", "MBSS" + Chunk("LCNT", count) + Bus(11, 0, "MB"));
     std::string events;
     Append(events, 2, 4);
-    body += Chunk("LIST", "EVTS" + Chunk("LCNT", events) + event(4, 1) + event(5, 3));
+    body += Chunk("LIST", "EVTS" + Chunk("LCNT", events) + event(4, 1, maximum, stealing, cooldown) + event(5, 3, maximum, stealing, cooldown));
     return Chunk("RIFF", "FEV " + Chunk("FMT ", version) + Chunk("LIST", body));
 }
 }
@@ -187,6 +187,29 @@ void CheckMultiPlayback() {
     instance->Stop(true);
     runtime.Render(rendered.data(), 6);
     for (auto value : rendered) if (value != 0) throw std::runtime_error("Stopped runtime event emitted audio");
+    for (unsigned policy = 0; policy <= 2; ++policy) {
+        System limited(1000);
+        limited.LoadBank(bank(0, false, 1, policy));
+        auto first = limited.CreateInstance(Bank::Guid{4});
+        auto second = limited.CreateInstance(Bank::Guid{4});
+        first->Start();
+        second->Start();
+        if (first->IsPlaying() != (policy != 2) || second->IsPlaying() != (policy != 0)) throw std::runtime_error("Event polyphony policy was not applied");
+    }
+    System cooling(1000);
+    cooling.LoadBank(bank(0, false, 4, 2, 0.01f));
+    auto coolingFirst = cooling.CreateInstance(Bank::Guid{4});
+    auto coolingSecond = cooling.CreateInstance(Bank::Guid{4});
+    coolingFirst->Start();
+    coolingSecond->Start();
+    if (coolingSecond->IsPlaying()) throw std::runtime_error("Event cooldown was not shared across instances");
+    std::array<float, 20> silence{};
+    cooling.Render(silence.data(), 9);
+    coolingSecond->Start();
+    if (coolingSecond->IsPlaying()) throw std::runtime_error("Event cooldown expired early");
+    cooling.Render(silence.data(), 1);
+    coolingSecond->Start();
+    if (!coolingSecond->IsPlaying()) throw std::runtime_error("Event cooldown did not expire");
     for (unsigned mode = 0; mode <= 4; ++mode) {
         Library scopedLibrary;
         scopedLibrary.Load(bank(mode));

@@ -71,6 +71,7 @@ add_library(OpenFmod STATIC
     src/Studio/Event/Playback/Scheduling.cpp
     src/Studio/Runtime/System.cpp
     src/Studio/Runtime/Context.cpp
+    src/Studio/Runtime/Admission.cpp
     src/Studio/Runtime/Event.cpp
     src/Studio/Runtime/State.cpp
     src/Studio/Runtime/Timeline.cpp

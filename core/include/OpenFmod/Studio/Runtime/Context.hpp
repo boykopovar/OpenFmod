@@ -18,6 +18,7 @@ class RuntimeContext : public std::enable_shared_from_this<RuntimeContext> {
 public:
     RuntimeContext(std::uint32_t sampleRate, std::uint32_t seed);
     std::shared_ptr<EventInstance> Create(const Bank::Guid& event, std::shared_ptr<EventRouting> parent = {}, std::optional<Bank::Guid> input = {});
+    bool Admit(EventInstance& event);
     void Retain(const std::shared_ptr<EventInstance>& event);
     void StopAll(bool immediate);
     void Render(float* stereo, std::size_t frames);
@@ -35,6 +36,8 @@ public:
 private:
     std::mt19937 generator;
     std::vector<std::shared_ptr<EventInstance>> retained;
+    std::map<Bank::Guid, std::uint64_t> lastStarts;
+    std::uint64_t launchSequence{};
     bool rendering{};
 };
 }

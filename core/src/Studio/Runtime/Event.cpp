@@ -5,6 +5,8 @@ EventInstance::EventInstance(std::shared_ptr<RuntimeContext> context, const Bank
     : state(std::make_unique<EventState>(std::move(context), event, std::move(parent), input)) {}
 EventInstance::~EventInstance() = default;
 void EventInstance::Start(const SoundStart& position) {
+    state->Stop(true);
+    if (!state->Context->Admit(*this)) return;
     state->Start(position);
     state->Context->Retain(shared_from_this());
 }
