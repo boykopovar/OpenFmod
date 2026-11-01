@@ -99,13 +99,15 @@ void CheckProject() {
     if (library.Require<Curve>(id).Evaluate(0) != 3 || retained->Evaluate(0) != 3) {
         throw std::runtime_error("Unloading a shared resource invalidated its owners");
     }
+    const auto revision = library.GetRevision();
     bool rejected = false;
     try { library.Load(project(3, 5)); }
     catch (const OpenFmod::FormatError&) { rejected = true; }
-    if (!rejected || library.Require<Curve>(id).Evaluate(0) != 3) {
+    if (!rejected || library.GetRevision() != revision || library.Require<Curve>(id).Evaluate(0) != 3) {
         throw std::runtime_error("Conflicting bank load changed the resource library");
     }
     library.Unload(second);
+    if (library.GetRevision() != revision + 1) throw std::runtime_error("Bank unload did not invalidate cached resource indices");
     if (retained->Evaluate(0) != 3) throw std::runtime_error("Active resource did not survive bank unload");
     try { library.Require<Curve>(id); }
     catch (const OpenFmod::FormatError&) { return; }

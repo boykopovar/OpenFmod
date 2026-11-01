@@ -1,5 +1,6 @@
 #include "OpenFmod/Studio/Project/Library.hpp"
 #include <type_traits>
+#include <limits>
 namespace OpenFmod::Studio {
 namespace {
 bool sameSample(const Sound::Sample& a, const Sound::Sample& b) {
@@ -57,16 +58,21 @@ void Library::add(const std::shared_ptr<const Project>& project) {
         if (!inserted && existing->second != item.Id) throw FormatError("Conflicting bank resource path");
     }
 }
+std::uint64_t Library::GetRevision() const { return revision; }
 Bank::Guid Library::Load(std::string bytes) {
+    if (revision == std::numeric_limits<std::uint64_t>::max()) throw FormatError("Library revision overflow");
     const auto project = std::make_shared<const Project>(ReadProject(std::move(bytes)));
     Library staged = *this;
     staged.add(project);
+    ++staged.revision;
     *this = std::move(staged);
     return project->Id;
 }
 void Library::Unload(const Bank::Guid& id) {
+    if (revision == std::numeric_limits<std::uint64_t>::max()) throw FormatError("Library revision overflow");
     if (!projects.count(id)) throw FormatError("Cannot unload an unknown project");
     Library staged;
+    staged.revision = revision + 1;
     for (const auto& [key, project] : projects) if (key != id) staged.add(project);
     *this = std::move(staged);
 }

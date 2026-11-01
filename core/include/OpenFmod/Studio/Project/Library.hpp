@@ -8,6 +8,7 @@ using Resource = std::variant<const PropertyModel<Event>*, const TimelineResourc
     const Controller*, const Curve*, const Mapping*, const PropertyModel<Modulation>*, const Sound::Sample*>;
 class Library {
 public:
+    std::uint64_t GetRevision() const;
     Bank::Guid Load(std::string bytes);
     void Unload(const Bank::Guid& id);
     Bank::Guid FindId(const std::string& path) const;
@@ -51,6 +52,7 @@ private:
     std::map<Bank::Guid, std::shared_ptr<const Project>> projects;
     std::map<ResourceKey, Entry> objects;
     std::map<std::string, Bank::Guid> paths;
+    std::uint64_t revision{};
 };
 }
 #endif

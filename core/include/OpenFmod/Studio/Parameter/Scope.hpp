@@ -23,6 +23,8 @@ private:
     void add(std::shared_ptr<const Parameter> model, ParameterScope* globals);
     std::map<Bank::Guid, Entry> entries;
     std::map<std::string, Bank::Guid> names;
+    const Library* refreshedLibrary{};
+    std::uint64_t refreshedRevision{};
     bool global;
 };
 }

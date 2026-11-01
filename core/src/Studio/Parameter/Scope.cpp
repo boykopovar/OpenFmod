@@ -14,6 +14,7 @@ ParameterScope::ParameterScope(const Library& library, const Event& event, Param
 }
 void ParameterScope::Refresh(const Library& library) {
     if (!global) throw FormatError("Only the global parameter scope can be refreshed");
+    if (refreshedLibrary == &library && refreshedRevision == library.GetRevision()) return;
     auto updated = *this;
     updated.entries.clear();
     updated.names.clear();
@@ -29,6 +30,8 @@ void ParameterScope::Refresh(const Library& library) {
     }
     entries.swap(updated.entries);
     names.swap(updated.names);
+    refreshedLibrary = &library;
+    refreshedRevision = library.GetRevision();
 }
 void ParameterScope::add(std::shared_ptr<const Parameter> model, ParameterScope* globals) {
     if (entries.count(model->Id)) return;
