@@ -1,5 +1,5 @@
 #include "OpenFmod/Studio/Runtime/System.hpp"
-#include "OpenFmod/Studio/Runtime/Context.hpp"
+#include "OpenFmod/Studio/Runtime/State.hpp"
 namespace OpenFmod::Studio {
 System::System(std::uint32_t sampleRate, std::uint32_t seed) : context(std::make_shared<RuntimeContext>(sampleRate, seed)) {}
 System::~System() { context->StopAll(true); }
@@ -11,7 +11,10 @@ Bank::Guid System::LoadBank(std::string bytes) {
 }
 void System::UnloadBank(const Bank::Guid& bank) {
     for (const auto& entry : context->Events) if (auto instance = entry.lock()) {
-        if (context->Resources.GetOwner<PropertyModel<Event>>(instance->GetId())->Id == bank) instance->Stop(true);
+        if (instance->state->BankId == bank) {
+            instance->Stop(true);
+            instance->state->Available = false;
+        }
     }
     context->Resources.Unload(bank);
     context->Globals.Refresh(context->Resources);

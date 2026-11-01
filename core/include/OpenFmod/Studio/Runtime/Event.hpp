@@ -22,6 +22,7 @@ public:
     bool IsOneshot() const;
     const Bank::Guid& GetId() const;
 private:
+    friend class System;
     friend class RuntimeContext;
     friend class EventState;
     EventInstance(std::shared_ptr<RuntimeContext> context, const Bank::Guid& event, std::shared_ptr<EventRouting> parent, std::optional<Bank::Guid> input);

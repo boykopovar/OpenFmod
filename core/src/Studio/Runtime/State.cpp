@@ -11,6 +11,7 @@ EventState::EventState(std::shared_ptr<RuntimeContext> context, const Bank::Guid
     : Context(std::move(context)), Model(Context->Resources.Retain<PropertyModel<Event>>(event)),
       Parameters(Context->Resources, Model->Definition, Context->Globals), Bindings(Context->Resources, Model->Definition),
       Playlists(Context->Resources, Context->Playlists) {
+    BankId = Context->Resources.GetOwner<PropertyModel<Event>>(event)->Id;
     const auto& definition = Model->Definition;
     if (!Model->Properties.empty()) throw FormatError("Event level animated properties require runtime bindings");
     if (definition.MasterBus != Bank::Guid{}) Routing = std::make_shared<EventRouting>(Context->Buses, definition, std::move(parent), input);
@@ -33,6 +34,7 @@ EventState::EventState(std::shared_ptr<RuntimeContext> context, const Bank::Guid
 }
 AutomationInput EventState::Input() const { return {Position, [this](const auto& id) { return Parameters.GetValue(id); }, {}}; }
 void EventState::Start(const SoundStart& position) {
+    if (!Available) throw FormatError("Event bank has been unloaded");
     if (!std::isfinite(position.OffsetPercent) || position.OffsetPercent < 0 || position.OffsetPercent > 100 || position.Repeats < -1) throw FormatError("Invalid event start position");
     Stop(true);
     actions.clear();

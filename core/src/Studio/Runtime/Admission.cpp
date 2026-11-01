@@ -5,6 +5,7 @@
 namespace OpenFmod::Studio {
 bool RuntimeContext::Admit(EventInstance& event) {
     auto& state = *event.state;
+    if (!state.Available) throw FormatError("Event bank has been unloaded");
     const auto& model = state.Model->Definition;
     const auto cooldown = static_cast<double>(model.CooldownSeconds) * 48000;
     if (!std::isfinite(cooldown) || cooldown < 0 || cooldown >= static_cast<double>(std::numeric_limits<std::uint64_t>::max())) throw FormatError("Invalid event cooldown");

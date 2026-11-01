@@ -210,6 +210,13 @@ void CheckMultiPlayback() {
     cooling.Render(silence.data(), 1);
     coolingSecond->Start();
     if (!coolingSecond->IsPlaying()) throw std::runtime_error("Event cooldown did not expire");
+    cooling.UnloadBank(Bank::Guid{});
+    if (coolingSecond->IsPlaying()) throw std::runtime_error("Unloaded bank retained active event audio");
+    cooling.LoadBank(bank());
+    bool rejected = false;
+    try { coolingSecond->Start(); } catch (const FormatError&) { rejected = true; }
+    if (!rejected) throw std::runtime_error("Reloaded bank revived an invalidated instance");
+    cooling.UnloadBank(Bank::Guid{});
     for (unsigned mode = 0; mode <= 4; ++mode) {
         Library scopedLibrary;
         scopedLibrary.Load(bank(mode));

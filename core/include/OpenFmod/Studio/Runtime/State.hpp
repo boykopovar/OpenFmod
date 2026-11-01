@@ -21,6 +21,8 @@ public:
     float GetParameter(const Bank::Guid& parameter) const override;
     const Parameter& GetParameterModel(const Bank::Guid& parameter) const override;
     void SetParameter(const Bank::Guid& parameter, float value) override;
+    Bank::Guid BankId{};
+    bool Available{true};
     std::shared_ptr<RuntimeContext> Context;
     std::shared_ptr<const PropertyModel<Event>> Model;
     std::shared_ptr<EventRouting> Routing;
