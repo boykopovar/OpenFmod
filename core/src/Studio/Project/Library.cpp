@@ -76,6 +76,11 @@ void Library::Unload(const Bank::Guid& id) {
     for (const auto& [key, project] : projects) if (key != id) staged.add(project);
     *this = std::move(staged);
 }
+std::shared_ptr<const Project> Library::GetProject(const Bank::Guid& id) const {
+    const auto found = projects.find(id);
+    if (found == projects.end()) throw FormatError("Unknown loaded project");
+    return found->second;
+}
 Bank::Guid Library::FindId(const std::string& path) const {
     const auto found = paths.find(path);
     if (found == paths.end()) throw FormatError("Unknown bank resource path: " + path);

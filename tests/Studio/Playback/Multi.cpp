@@ -167,8 +167,12 @@ void CheckMultiPlayback() {
     if (!supplied || pcm != std::array<float, 6>{2, 2, 3, 3, 4, 4} || programmer.IsPlaying()) {
         throw std::runtime_error("Programmer audio source was not rendered with its requested offset");
     }
+    System published(1000);
+    published.LoadBank(bank(0, false, 4, 2, 0, 0x1801));
+    if (published.GetEvents().size() != 2 || published.GetEvents(Bank::Guid{}).size() != 2) throw std::runtime_error("Public bank events were not enumerated");
     System runtime(1000);
     runtime.LoadBank(bank());
+    if (!runtime.GetEvents().empty() || !runtime.GetEvents(Bank::Guid{}).empty()) throw std::runtime_error("Private nested events were published");
     runtime.SetProgrammerSoundFactory([](const auto&) {
         auto pcm = std::make_shared<Audio::PcmData>();
         pcm->Layout = {1000, 2, 4};

@@ -10,6 +10,7 @@ Bank::Guid System::LoadBank(std::string bytes) {
     return bank;
 }
 void System::UnloadBank(const Bank::Guid& bank) {
+    context->Resources.GetProject(bank);
     for (const auto& entry : context->Events) if (auto instance = entry.lock()) {
         if (instance->state->BankId == bank) {
             instance->Stop(true);
@@ -23,7 +24,13 @@ void System::UnloadBank(const Bank::Guid& bank) {
 }
 std::vector<Bank::Guid> System::GetEvents() const {
     std::vector<Bank::Guid> result;
-    for (const auto& event : context->Resources.GetAll<PropertyModel<Event>>()) result.push_back(event->Definition.Id);
+    for (const auto& event : context->Resources.GetAll<PropertyModel<Event>>()) if (event->Definition.Flags & 1) result.push_back(event->Definition.Id);
+    return result;
+}
+std::vector<Bank::Guid> System::GetEvents(const Bank::Guid& bank) const {
+    std::vector<Bank::Guid> result;
+    const auto project = context->Resources.GetProject(bank);
+    for (const auto& [id, event] : project->Events) if (event.Definition.Flags & 1) result.push_back(id);
     return result;
 }
 Bank::Guid System::FindId(const std::string& path) const { return context->Resources.FindId(path); }

@@ -11,6 +11,7 @@ public:
     std::uint64_t GetRevision() const;
     Bank::Guid Load(std::string bytes);
     void Unload(const Bank::Guid& id);
+    std::shared_ptr<const Project> GetProject(const Bank::Guid& id) const;
     Bank::Guid FindId(const std::string& path) const;
     std::string GetPath(const Bank::Guid& id) const;
     template<class TValue>
