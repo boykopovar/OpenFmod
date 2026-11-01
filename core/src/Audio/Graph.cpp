@@ -101,8 +101,9 @@ void Graph::AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_p
     chain.push_back(std::move(processor));
 }
 void Graph::SetPitch(std::uint64_t bus, float pitch) {
-    requireBus(bus);
+    auto& target = requireBus(bus);
     if (!std::isfinite(pitch) || pitch <= 0) throw FormatError("Invalid audio bus pitch");
+    if (target.pitch == pitch) return;
     std::map<std::uint64_t, float> effective;
     for (const auto& [id, node] : buses) {
         const auto inherited = id ? effective.at(node->parent) : 1;
