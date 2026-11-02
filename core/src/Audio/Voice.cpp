@@ -20,13 +20,20 @@ Voice::Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::
     }
     rateRatio = static_cast<double>(format.Rate) / outputRate;
     SetGain(settings.Gain);
+    currentGain = settings.GainRampFrames ? 0 : settings.Gain;
+    gainRemaining = settings.GainRampFrames;
+    if (gainRemaining) gainIncrement = settings.Gain / gainRemaining;
     SetPitch(settings.Pitch);
     position = static_cast<double>(settings.StartFrame);
     this->source->Seek(settings.StartFrame);
 }
 void Voice::SetGain(float value) {
     if (!std::isfinite(value) || value < 0) throw FormatError("Invalid voice gain");
+    if (settings.Gain == value) return;
     settings.Gain = value;
+    gainRemaining = settings.GainRampFrames;
+    if (gainRemaining) gainIncrement = (value - currentGain) / gainRemaining;
+    else currentGain = value;
 }
 void Voice::SetPitch(float value) {
     if (!std::isfinite(value) || value < 0) throw FormatError("Invalid voice pitch");
@@ -99,8 +106,7 @@ std::array<float, 8> Voice::readFrame(std::uint64_t frame) {
 VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch) {
     if (frames && !stereo) throw FormatError("Missing voice output buffer");
     if (!std::isfinite(masterGain) || masterGain < 0) throw FormatError("Invalid master gain");
-    const auto gain = settings.Gain * masterGain;
-    if (!std::isfinite(gain)) throw FormatError("Voice gain overflow");
+    if (!std::isfinite(settings.Gain * masterGain)) throw FormatError("Voice gain overflow");
     const auto step = rateStep(masterPitch);
     std::size_t output = static_cast<std::size_t>(std::min<std::uint64_t>(settings.DelayFrames, frames));
     settings.DelayFrames -= output;
@@ -114,9 +120,12 @@ VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, fl
         else if (next == endFrame) next = frame;
         const auto first = readFrame(frame);
         const auto second = fraction ? readFrame(next) : first;
+        const auto fade = fadePosition < settings.FadeInFrames ? static_cast<float>(fadePosition++) / settings.FadeInFrames : 1;
+        const auto gain = currentGain * masterGain * fade;
         for (std::size_t channel = 0; channel < outputChannels; ++channel) {
             stereo[output * outputChannels + channel] += (first[channel] + (second[channel] - first[channel]) * fraction) * gain;
         }
+        if (gainRemaining) currentGain = --gainRemaining ? currentGain + gainIncrement : settings.Gain;
         position += step;
     }
     return {frames, settings.DelayFrames != 0 || settings.Repeats != 0 || position < endFrame};

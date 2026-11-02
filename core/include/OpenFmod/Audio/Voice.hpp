@@ -9,6 +9,8 @@ namespace OpenFmod::Audio {
 struct VoiceSettings {
     float Gain{1};
     float Pitch{1};
+    std::uint32_t GainRampFrames{};
+    std::uint32_t FadeInFrames{};
     std::uint64_t DelayFrames{};
     std::uint64_t StartFrame{};
     std::uint64_t LoopBegin{};
@@ -44,6 +46,10 @@ private:
     std::size_t outputChannels{};
     double rateRatio;
     double position{};
+    float currentGain{};
+    float gainIncrement{};
+    std::uint32_t gainRemaining{};
+    std::uint32_t fadePosition{};
     std::uint64_t endFrame{};
     std::array<float, 4096> buffer{};
     std::uint64_t bufferBegin{};

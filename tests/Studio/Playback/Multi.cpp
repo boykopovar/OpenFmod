@@ -164,7 +164,7 @@ void CheckMultiPlayback() {
     programmer.Start({48, 0, 0}, {});
     std::array<float, 6> pcm{};
     programmerMixer.Render(pcm.data(), 3);
-    if (!supplied || pcm != std::array<float, 6>{2, 2, 3, 3, 4, 4} || programmer.IsPlaying()) {
+    if (!supplied || pcm != std::array<float, 6>{0, 0, 3.0f / 4096, 3.0f / 4096, 16.0f / 4096, 16.0f / 4096} || programmer.IsPlaying()) {
         throw std::runtime_error("Programmer audio source was not rendered with its requested offset");
     }
     System published(1000);
@@ -184,7 +184,7 @@ void CheckMultiPlayback() {
     instance->Start();
     std::array<float, 12> rendered{};
     runtime.Render(rendered.data(), 6);
-    if (instance->IsPlaying() || rendered != std::array<float, 12>{0.5f, 0.5f, 1, 1, 1.5f, 1.5f, 2, 2, 0, 0}) {
+    if (instance->IsPlaying() || rendered != std::array<float, 12>{0, 0, 1.0f / 4096, 1.0f / 4096, 6.0f / 4096, 6.0f / 4096, 18.0f / 4096, 18.0f / 4096, 0, 0}) {
         throw std::runtime_error("Runtime event lost routing, gain, audio or natural completion");
     }
     instance->Start();

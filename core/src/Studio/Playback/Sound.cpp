@@ -41,6 +41,10 @@ void SoundPlayback::Start(const SoundStart& start, const AutomationInput& input)
         if (duration < 0) settings.Repeats = -1;
         source = std::make_unique<Audio::SilenceSource>(Audio::Format{sampleRate, 1, sample.Frames});
     }
+    if (!std::holds_alternative<SilenceInstrument>(model->Definition.Source)) {
+        settings.GainRampFrames = 64;
+        settings.FadeInFrames = 64;
+    }
     settings.Gain = properties.GetGain();
     settings.Pitch = properties.GetPitch(input);
     voice = mixer.Play(std::move(source), settings);
