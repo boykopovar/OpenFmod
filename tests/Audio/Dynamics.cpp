@@ -26,6 +26,22 @@ void CheckDynamics() {
     if (std::abs(signal.back() - 0.01f * std::pow(100.0f, -0.25f)) > 0.000001f) {
         throw std::runtime_error("External signal did not control compression");
     }
+    for (std::size_t channels : {1u, 6u, 8u}) {
+        Compressor combined(48000, settings);
+        std::vector<Compressor> individual(channels, Compressor(48000, settings));
+        std::vector<float> input(512 * channels);
+        for (std::size_t index = 0; index < input.size(); ++index) input[index] = std::sin(static_cast<float>(index) * 0.17f);
+        auto output = input;
+        combined.Process(output.data(), 512, channels);
+        for (std::size_t channel = 0; channel < channels; ++channel) {
+            std::vector<float> mono(512);
+            for (std::size_t frame = 0; frame < 512; ++frame) mono[frame] = input[frame * channels + channel];
+            individual[channel].Process(mono.data(), 512, 1);
+            for (std::size_t frame = 0; frame < 512; ++frame) {
+                if (mono[frame] != output[frame * channels + channel]) throw std::runtime_error("Independent compression linked channel envelopes");
+            }
+        }
+    }
     Compressor whole(48000, settings), split(48000, settings);
     auto a = sidechain;
     auto b = a;

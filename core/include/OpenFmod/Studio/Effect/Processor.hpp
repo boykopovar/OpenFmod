@@ -17,6 +17,7 @@ public:
     void ProcessWithSidechain(float* stereo, std::size_t frames, const float* sidechain, std::size_t channels);
 private:
     using Unit = std::variant<Audio::Compressor, Audio::Reverb, Audio::Panner, Audio::ThreeBandEq, Audio::MultibandEq>;
+    void prepareSidechain(std::size_t frames);
     static Unit create(const Effect& effect, std::uint32_t sampleRate);
     std::vector<EffectParameter> parameters;
     Unit unit;

@@ -30,9 +30,14 @@ void EffectProcessor::Process(const float* input, float* output, std::size_t fra
         Process(output, frames);
         return;
     }
+    if (sidechainEnabled) {
+        prepareSidechain(frames);
+        std::get<Audio::Compressor>(unit).ProcessWithSidechain(output, frames, channels, mixedSidechain.data(), 2);
+        return;
+    }
     std::visit([&](auto& processor) {
         using TProcessor = std::decay_t<decltype(processor)>;
-        if constexpr (std::is_same_v<TProcessor, Audio::ThreeBandEq> || std::is_same_v<TProcessor, Audio::MultibandEq> || std::is_same_v<TProcessor, Audio::Reverb>) {
+        if constexpr (std::is_same_v<TProcessor, Audio::ThreeBandEq> || std::is_same_v<TProcessor, Audio::MultibandEq> || std::is_same_v<TProcessor, Audio::Reverb> || std::is_same_v<TProcessor, Audio::Compressor>) {
             processor.Process(output, frames, channels);
         } else throw FormatError("Effect requires a stereo input layout");
     }, unit);

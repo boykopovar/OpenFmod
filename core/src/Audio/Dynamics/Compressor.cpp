@@ -30,16 +30,22 @@ float Compressor::gain(float energy, std::size_t channel) {
     return second[channel] > threshold ? makeup * std::pow(second[channel] / threshold, exponent) : makeup;
 }
 void Compressor::Process(float* stereo, std::size_t frames) {
-    ProcessWithSidechain(stereo, frames, stereo, 2);
+    Process(stereo, frames, 2);
+}
+void Compressor::Process(float* samples, std::size_t frames, std::size_t channels) {
+    ProcessWithSidechain(samples, frames, channels, samples, channels);
 }
 void Compressor::ProcessWithSidechain(float* stereo, std::size_t frames, const float* sidechain, std::size_t channels) {
-    if (!channels || channels > 32 || frames > std::numeric_limits<std::size_t>::max() / channels
-        || frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && (!stereo || !sidechain))) {
+    ProcessWithSidechain(stereo, frames, 2, sidechain, channels);
+}
+void Compressor::ProcessWithSidechain(float* stereo, std::size_t frames, std::size_t outputChannels, const float* sidechain, std::size_t channels) {
+    if (!outputChannels || outputChannels > 8 || !channels || channels > 32 || frames > std::numeric_limits<std::size_t>::max() / channels
+        || frames > std::numeric_limits<std::size_t>::max() / outputChannels || (frames && (!stereo || !sidechain))) {
         throw FormatError("Invalid compressor audio buffers");
     }
-    const bool linked = settings.Linked || channels != 2;
+    const bool linked = settings.Linked || channels != outputChannels;
     for (std::size_t frame = 0; frame < frames; ++frame) {
-        std::array<float, 2> gains{};
+        std::array<float, 8> gains{};
         if (linked) {
             float energy = 0;
             for (std::size_t channel = 0; channel < channels; ++channel) {
@@ -48,15 +54,15 @@ void Compressor::ProcessWithSidechain(float* stereo, std::size_t frames, const f
             }
             gains.fill(gain(energy, 0));
         } else {
-            for (std::size_t channel = 0; channel < 2; ++channel) {
-                const float value = sidechain[frame * 2 + channel];
+            for (std::size_t channel = 0; channel < outputChannels; ++channel) {
+                const float value = sidechain[frame * channels + channel];
                 gains[channel] = gain(value * value, channel);
             }
         }
-        for (std::size_t channel = 0; channel < 2; ++channel) {
-            const float value = stereo[frame * 2 + channel] * gains[channel];
+        for (std::size_t channel = 0; channel < outputChannels; ++channel) {
+            const float value = stereo[frame * outputChannels + channel] * gains[channel];
             if (!std::isfinite(value) || !std::isfinite(second[channel])) throw FormatError("Nonfinite compressor signal");
-            stereo[frame * 2 + channel] = value;
+            stereo[frame * outputChannels + channel] = value;
         }
     }
 }

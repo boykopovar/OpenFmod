@@ -50,16 +50,19 @@ void EffectProcessor::Process(float* stereo, std::size_t frames) {
     if ((frames && !stereo) || frames > std::numeric_limits<std::size_t>::max() / 2) throw FormatError("Invalid effect output buffer");
     if (!frames || bypassed) return;
     if (sidechainEnabled) {
-        if (sidechains.empty()) throw FormatError("Compressor requires a sidechain signal");
-        mixedSidechain.assign(frames * 2, 0);
-        for (const auto& source : sidechains) {
-            const auto& signal = source->GetSamples(frames);
-            for (std::size_t index = 0; index < signal.size(); ++index) mixedSidechain[index] += signal[index];
-        }
+        prepareSidechain(frames);
         ProcessWithSidechain(stereo, frames, mixedSidechain.data(), 2);
         return;
     }
     if (!bypassed) std::visit([&](auto& processor) { processor.Process(stereo, frames); }, unit);
+}
+void EffectProcessor::prepareSidechain(std::size_t frames) {
+    if (sidechains.empty()) throw FormatError("Compressor requires a sidechain signal");
+    mixedSidechain.assign(frames * 2, 0);
+    for (const auto& source : sidechains) {
+        const auto& signal = source->GetSamples(frames);
+        for (std::size_t index = 0; index < signal.size(); ++index) mixedSidechain[index] += signal[index];
+    }
 }
 void EffectProcessor::ProcessWithSidechain(float* stereo, std::size_t frames, const float* sidechain, std::size_t channels) {
     const auto processor = std::get_if<Audio::Compressor>(&unit);

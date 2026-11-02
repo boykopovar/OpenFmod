@@ -18,7 +18,9 @@ public:
     void Configure(CompressorSettings settings);
     void Reset();
     void Process(float* stereo, std::size_t frames) override;
+    void Process(float* samples, std::size_t frames, std::size_t channels);
     void ProcessWithSidechain(float* stereo, std::size_t frames, const float* sidechain, std::size_t channels);
+    void ProcessWithSidechain(float* samples, std::size_t frames, std::size_t outputChannels, const float* sidechain, std::size_t channels);
 private:
     float gain(float energy, std::size_t channel);
     std::uint32_t sampleRate;
@@ -28,8 +30,8 @@ private:
     float attack{};
     float release{};
     float makeup{};
-    std::array<float, 2> first{};
-    std::array<float, 2> second{};
+    std::array<float, 8> first{};
+    std::array<float, 8> second{};
 };
 }
 #endif
