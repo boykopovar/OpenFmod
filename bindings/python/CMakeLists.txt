@@ -1,0 +1,6 @@
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(pybind11 CONFIG REQUIRED)
+pybind11_add_module(_openfmod NO_EXTRAS Module.cpp)
+target_link_libraries(_openfmod PRIVATE OpenFmod::OpenFmod)
+target_compile_features(_openfmod PRIVATE cxx_std_17)
+set_target_properties(_openfmod PROPERTIES CXX_EXTENSIONS OFF)
