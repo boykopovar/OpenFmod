@@ -10,6 +10,7 @@ public:
     std::size_t GetOutputChannels() const;
     void Add(const float* input, float* output, std::size_t frames, float gain = 1) const;
 private:
+    bool identity;
     std::size_t inputChannels;
     std::size_t outputChannels;
     std::vector<float> coefficients;

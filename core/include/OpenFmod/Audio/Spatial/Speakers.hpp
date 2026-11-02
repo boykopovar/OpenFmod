@@ -3,6 +3,7 @@
 #include "OpenFmod/Audio/Spatial/Layout.hpp"
 namespace OpenFmod::Audio {
 enum class SpeakerMode { Mono = 2, Stereo, Quad, Surround, Surround51, Surround71 };
+std::size_t SpeakerChannels(SpeakerMode mode);
 class Speakers {
 public:
     explicit Speakers(SpeakerMode mode);

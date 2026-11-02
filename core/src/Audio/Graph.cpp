@@ -11,6 +11,8 @@ struct Graph::Bus {
     std::uint64_t parent;
     Mixer mixer;
     SpeakerMode layout;
+    std::optional<MixMatrix> routing;
+    SpeakerMode routedLayout{SpeakerMode::Stereo};
     std::vector<float> scratch;
     float gain{1};
     float pitch{1};
@@ -141,7 +143,7 @@ void Graph::Render(float* stereo, std::size_t frames) {
     }
     for (auto& entry : buses) {
         auto& node = *entry.second;
-        node.buffer.resize(frames * Speakers(node.layout).GetChannels());
+        node.buffer.resize(frames * SpeakerChannels(node.layout));
         node.mixer.Render(node.buffer.data(), frames);
     }
     for (const auto id : order) {
@@ -155,7 +157,7 @@ void Graph::Render(float* stereo, std::size_t frames) {
                 } else {
                     const auto& transform = std::get<std::shared_ptr<IAudioTransform>>(processor);
                     const auto outputLayout = transform->GetOutputLayout(layout);
-                    node.scratch.resize(frames * Speakers(outputLayout).GetChannels());
+                    node.scratch.resize(frames * SpeakerChannels(outputLayout));
                     transform->Process(node.buffer.data(), node.scratch.data(), frames, layout);
                     node.buffer.swap(node.scratch);
                     layout = outputLayout;
@@ -170,7 +172,11 @@ void Graph::Render(float* stereo, std::size_t frames) {
         }
         if (id) {
             auto& parent = requireBus(node.parent);
-            MixMatrix(layout, parent.layout).Add(node.buffer.data(), parent.buffer.data(), frames);
+            if (!node.routing || node.routedLayout != layout) {
+                node.routing.emplace(layout, parent.layout);
+                node.routedLayout = layout;
+            }
+            node.routing->Add(node.buffer.data(), parent.buffer.data(), frames);
         } else if (layout != SpeakerMode::Stereo) {
             node.scratch.assign(frames * 2, 0);
             MixMatrix(layout, SpeakerMode::Stereo).Add(node.buffer.data(), node.scratch.data(), frames);

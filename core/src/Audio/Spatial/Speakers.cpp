@@ -4,24 +4,31 @@
 #include <cmath>
 #include <algorithm>
 namespace OpenFmod::Audio {
-Speakers::Speakers(SpeakerMode mode) : mode(mode), channels(0) {
+std::size_t SpeakerChannels(SpeakerMode mode) {
     switch (mode) {
-        case SpeakerMode::Mono: channels = 1; break;
-        case SpeakerMode::Stereo: channels = 2; break;
+        case SpeakerMode::Mono: return 1;
+        case SpeakerMode::Stereo: return 2;
+        case SpeakerMode::Quad: return 4;
+        case SpeakerMode::Surround: return 5;
+        case SpeakerMode::Surround51: return 6;
+        case SpeakerMode::Surround71: return 8;
+        default: throw FormatError("Unsupported speaker layout");
+    }
+}
+Speakers::Speakers(SpeakerMode mode) : mode(mode), channels(SpeakerChannels(mode)) {
+    switch (mode) {
+        case SpeakerMode::Mono: break;
+        case SpeakerMode::Stereo: break;
         case SpeakerMode::Quad:
-            channels = 4;
             planar.emplace(PlanarLayout{4, {{0, -45}, {1, 45}, {2, -135}, {3, 135}}, {}});
             break;
         case SpeakerMode::Surround:
-            channels = 5;
             planar.emplace(PlanarLayout{5, {{0, -30}, {1, 30}, {2, 0}, {3, -110}, {4, 110}}, {}});
             break;
         case SpeakerMode::Surround51:
-            channels = 6;
             planar.emplace(PlanarLayout{6, {{0, -30}, {1, 30}, {2, 0}, {4, -110}, {5, 110}}, 3});
             break;
         case SpeakerMode::Surround71:
-            channels = 8;
             planar.emplace(PlanarLayout{8, {{0, -30}, {1, 30}, {2, 0}, {4, -90}, {5, 90}, {6, -150}, {7, 150}}, 3});
             break;
         default: throw FormatError("Unsupported speaker layout");

@@ -5,11 +5,11 @@
 #include <type_traits>
 namespace OpenFmod::Studio {
 Audio::SpeakerMode EffectProcessor::GetOutputLayout(Audio::SpeakerMode input) const {
-    static_cast<void>(Audio::Speakers(input));
+    static_cast<void>(Audio::SpeakerChannels(input));
     return !bypassed && std::holds_alternative<Audio::Panner>(unit) ? Audio::SpeakerMode::Stereo : input;
 }
 void EffectProcessor::Process(const float* input, float* output, std::size_t frames, Audio::SpeakerMode inputLayout) {
-    const auto channels = Audio::Speakers(inputLayout).GetChannels();
+    const auto channels = Audio::SpeakerChannels(inputLayout);
     if (frames > std::numeric_limits<std::size_t>::max() / 8 || (frames && (!input || !output))) throw FormatError("Invalid effect channel buffers");
     if (!frames) return;
     if (bypassed) {

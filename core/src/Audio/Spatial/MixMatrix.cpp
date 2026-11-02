@@ -15,7 +15,7 @@ SpeakerMode SpeakerLayout(std::size_t channels) {
     }
 }
 MixMatrix::MixMatrix(SpeakerMode input, SpeakerMode output)
-    : inputChannels(Speakers(input).GetChannels()), outputChannels(Speakers(output).GetChannels()), coefficients(inputChannels * outputChannels) {
+    : identity(input == output), inputChannels(SpeakerChannels(input)), outputChannels(SpeakerChannels(output)), coefficients(inputChannels * outputChannels) {
     if (input == output) {
         for (std::size_t channel = 0; channel < inputChannels; ++channel) coefficients[channel * inputChannels + channel] = 1;
     } else if (output == SpeakerMode::Stereo) coefficients = Speakers(input).StereoDownmix();
@@ -38,6 +38,10 @@ void MixMatrix::Add(const float* input, float* output, std::size_t frames, float
     if ((frames && (!input || !output || input == output)) || !std::isfinite(gain)
         || frames > std::numeric_limits<std::size_t>::max() / inputChannels
         || frames > std::numeric_limits<std::size_t>::max() / outputChannels) throw FormatError("Invalid channel conversion buffer");
+    if (identity) {
+        for (std::size_t index = 0; index < frames * inputChannels; ++index) output[index] += input[index] * gain;
+        return;
+    }
     for (std::size_t frame = 0; frame < frames; ++frame) {
         for (std::size_t destination = 0; destination < outputChannels; ++destination) {
             float value = 0;
