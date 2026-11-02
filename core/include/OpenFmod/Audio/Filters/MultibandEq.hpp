@@ -8,6 +8,7 @@ public:
     explicit MultibandEq(std::uint32_t sampleRate);
     void Configure(std::size_t band, EqualizerBand settings, std::uint32_t rampFrames = 0);
     void Process(float* stereo, std::size_t frames) override;
+    void Process(float* samples, std::size_t frames, std::size_t channels);
 private:
     struct Band {
         EqualizerBand Settings;

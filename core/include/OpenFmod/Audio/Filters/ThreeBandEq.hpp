@@ -14,9 +14,10 @@ public:
     explicit ThreeBandEq(std::uint32_t sampleRate, ThreeBandSettings settings = {});
     void Configure(ThreeBandSettings settings);
     void Process(float* stereo, std::size_t frames) override;
+    void Process(float* samples, std::size_t frames, std::size_t channels);
 private:
     void configureFilters(std::uint32_t rampFrames);
-    std::array<float, 2> filter(std::size_t branch, std::array<float, 2> input);
+    std::array<float, 8> filter(std::size_t branch, std::array<float, 8> input, std::size_t channels);
     std::uint32_t sampleRate;
     ThreeBandSettings settings;
     std::array<std::array<Biquad, 4>, 4> branches;

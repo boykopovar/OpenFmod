@@ -35,6 +35,11 @@ void Biquad::Configure(const BiquadCoefficients& values, std::uint32_t rampFrame
 }
 void Biquad::Reset() { memory = {}; }
 std::array<float, 2> Biquad::Process(std::array<float, 2> input) {
+    Process(input.data(), input.size());
+    return input;
+}
+void Biquad::Process(float* input, std::size_t channels) {
+    if (!input || !channels || channels > memory.size()) throw FormatError("Invalid filter channel buffer");
     if (remaining) {
         --remaining;
         if (!remaining) coefficients = target;
@@ -42,13 +47,12 @@ std::array<float, 2> Biquad::Process(std::array<float, 2> input) {
             for (std::size_t index = 0; index < step.size(); ++index) coefficients[index] += step[index];
         }
     }
-    for (std::size_t channel = 0; channel < input.size(); ++channel) {
+    for (std::size_t channel = 0; channel < channels; ++channel) {
         auto& state = memory[channel];
         const float current = input[channel] - state[0] * coefficients[3] - state[1] * coefficients[4];
         input[channel] = current * coefficients[0] + state[0] * coefficients[1] + state[1] * coefficients[2];
         state[1] = state[0];
         state[0] = current;
     }
-    return input;
 }
 }

@@ -43,27 +43,29 @@ void ThreeBandEq::configureFilters(std::uint32_t rampFrames) {
         }
     }
 }
-std::array<float, 2> ThreeBandEq::filter(std::size_t branch, std::array<float, 2> input) {
+std::array<float, 8> ThreeBandEq::filter(std::size_t branch, std::array<float, 8> input, std::size_t channels) {
     const auto stages = std::size_t{1} << settings.Slope;
-    for (std::size_t stage = 0; stage < stages; ++stage) input = branches[branch][stage].Process(input);
+    for (std::size_t stage = 0; stage < stages; ++stage) branches[branch][stage].Process(input.data(), channels);
     return input;
 }
-void ThreeBandEq::Process(float* stereo, std::size_t frames) {
-    if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) {
+void ThreeBandEq::Process(float* stereo, std::size_t frames) { Process(stereo, frames, 2); }
+void ThreeBandEq::Process(float* stereo, std::size_t frames, std::size_t channels) {
+    if (!channels || channels > 8 || frames > std::numeric_limits<std::size_t>::max() / channels || (frames && !stereo)) {
         throw FormatError("Invalid equalizer buffer");
     }
     for (std::size_t frame = 0; frame < frames; ++frame) {
         for (std::size_t index = 0; index < gains.size(); ++index) {
             if (remaining[index]) gains[index] = --remaining[index] ? gains[index] + increments[index] : targets[index];
         }
-        const std::array<float, 2> input{stereo[frame * 2], stereo[frame * 2 + 1]};
-        const auto low = filter(0, input);
-        const auto mid = filter(2, filter(1, input));
-        const auto high = filter(3, input);
-        for (std::size_t channel = 0; channel < 2; ++channel) {
+        std::array<float, 8> input{};
+        for (std::size_t channel = 0; channel < channels; ++channel) input[channel] = stereo[frame * channels + channel];
+        const auto low = filter(0, input, channels);
+        const auto mid = filter(2, filter(1, input, channels), channels);
+        const auto high = filter(3, input, channels);
+        for (std::size_t channel = 0; channel < channels; ++channel) {
             const float value = low[channel] * gains[0] + mid[channel] * gains[1] * (settings.Slope ? 1 : -1) + high[channel] * gains[2];
             if (!std::isfinite(value)) throw FormatError("Nonfinite equalizer output");
-            stereo[frame * 2 + channel] = value;
+            stereo[frame * channels + channel] = value;
         }
     }
 }

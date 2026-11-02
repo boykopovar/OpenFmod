@@ -15,18 +15,20 @@ void MultibandEq::Configure(std::size_t index, EqualizerBand settings, std::uint
     band.Stages = FilterStages(settings.Type);
     for (std::size_t stage = 0; stage < band.Stages; ++stage) band.Filters[stage].Configure(coefficients, rampFrames);
 }
-void MultibandEq::Process(float* stereo, std::size_t frames) {
-    if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) {
+void MultibandEq::Process(float* stereo, std::size_t frames) { Process(stereo, frames, 2); }
+void MultibandEq::Process(float* stereo, std::size_t frames, std::size_t channels) {
+    if (!channels || channels > 8 || frames > std::numeric_limits<std::size_t>::max() / channels || (frames && !stereo)) {
         throw FormatError("Invalid multiband equalizer buffer");
     }
     for (auto& band : bands) {
         if (!band.Stages) continue;
         for (std::size_t frame = 0; frame < frames; ++frame) {
-            std::array<float, 2> value{stereo[frame * 2], stereo[frame * 2 + 1]};
-            for (std::size_t stage = 0; stage < band.Stages; ++stage) value = band.Filters[stage].Process(value);
-            for (std::size_t channel = 0; channel < value.size(); ++channel) {
+            std::array<float, 8> value{};
+            for (std::size_t channel = 0; channel < channels; ++channel) value[channel] = stereo[frame * channels + channel];
+            for (std::size_t stage = 0; stage < band.Stages; ++stage) band.Filters[stage].Process(value.data(), channels);
+            for (std::size_t channel = 0; channel < channels; ++channel) {
                 if (!std::isfinite(value[channel])) throw FormatError("Nonfinite multiband equalizer output");
-                stereo[frame * 2 + channel] = value[channel];
+                stereo[frame * channels + channel] = value[channel];
             }
         }
     }

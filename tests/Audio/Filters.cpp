@@ -17,6 +17,24 @@ std::vector<float> signal() {
 }
 void CheckFilters() {
     using namespace OpenFmod::Audio;
+    for (std::size_t channels : {1u, 4u, 6u, 8u}) {
+        ThreeBandSettings settings;
+        settings.GainDecibels = {-4, 2, -8};
+        ThreeBandEq combined(48000, settings);
+        std::vector<ThreeBandEq> individual(channels, ThreeBandEq(48000, settings));
+        std::vector<float> input(128 * channels);
+        for (std::size_t index = 0; index < input.size(); ++index) input[index] = std::sin(static_cast<float>(index) * 0.13f);
+        auto output = input;
+        combined.Process(output.data(), 128, channels);
+        for (std::size_t channel = 0; channel < channels; ++channel) {
+            std::vector<float> mono(128);
+            for (std::size_t frame = 0; frame < 128; ++frame) mono[frame] = input[frame * channels + channel];
+            individual[channel].Process(mono.data(), 128, 1);
+            for (std::size_t frame = 0; frame < 128; ++frame) {
+                if (mono[frame] != output[frame * channels + channel]) throw std::runtime_error("Equalizer leaked state across channels");
+            }
+        }
+    }
     for (std::uint32_t slope = 0; slope < 3; ++slope) {
         ThreeBandSettings settings;
         settings.Slope = slope;
