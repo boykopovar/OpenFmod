@@ -9,7 +9,7 @@ void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::
             const auto& model = *retained;
             auto processor = std::make_shared<EffectProcessor>(model, sampleRate);
             if (!node.Effects.emplace(item.Id, processor).second) throw FormatError("Duplicate bus effect");
-            graph.AddProcessor(node.AudioId, stage, std::move(processor));
+            graph.AddTransform(node.AudioId, stage, std::move(processor));
         } else {
             const auto retained = library.Retain<Sidechain>(item.Id);
             node.Sidechains.emplace(item.Id, retained);
@@ -18,7 +18,7 @@ void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::
             auto tap = std::make_shared<Audio::SignalTap>();
             tap->SetGain(gain);
             if (!node.Taps.emplace(item.Id, tap).second) throw FormatError("Duplicate sidechain tap");
-            graph.AddProcessor(node.AudioId, stage, std::move(tap));
+            graph.AddTransform(node.AudioId, stage, std::move(tap));
         }
     }
 }

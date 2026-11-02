@@ -50,6 +50,7 @@ add_library(OpenFmod STATIC
     src/Studio/Automation/Resolver.cpp
     src/Studio/Effect/Configuration.cpp
     src/Studio/Effect/PannerConfiguration.cpp
+    src/Studio/Effect/Channels.cpp
     src/Studio/Effect/Processor.cpp
     src/Studio/Effect/Model.cpp
     src/Studio/Snapshot/Model.cpp

@@ -50,7 +50,7 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
         const auto levels = baseLevels(*model);
         node.BaseGain = VolumeGain(levels.VolumeDecibels);
         node.BasePitch = PitchRatio(levels.PitchSemitones);
-        node.AudioId = graph.AddBus(parentId);
+        node.AudioId = graph.AddBus(parentId, static_cast<Audio::SpeakerMode>(model->ChannelLayout));
         try {
             graph.SetGain(node.AudioId, node.BaseGain);
             graph.SetPitch(node.AudioId, node.BasePitch);

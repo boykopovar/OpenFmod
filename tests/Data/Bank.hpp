@@ -12,7 +12,8 @@ inline std::string Bus(unsigned char identity, unsigned char parent, const std::
     header += route;
     Append(header, 0, 8);
     std::string values;
-    Append(values, 0, 8);
+    Append(values, 0, 4);
+    Append(values, 3, 4);
     Append(values, 0, 4);
     Append(values, 8, 2);
     AppendFloat(values, 0);
