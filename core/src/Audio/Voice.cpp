@@ -4,13 +4,15 @@
 #include <cmath>
 #include <limits>
 namespace OpenFmod::Audio {
-Voice::Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate)
+Voice::Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate, SpeakerMode outputLayout)
     : source(std::move(source)), settings(settings) {
     if (!this->source) throw FormatError("Missing audio source");
     format = this->source->GetFormat();
-    if (!outputRate || !format.Rate || !format.Channels || format.Channels > 2 || format.Frames > (std::uint64_t{1} << 53)) {
+    if (!outputRate || !format.Rate || !format.Channels || format.Channels > 8 || format.Frames > (std::uint64_t{1} << 53)) {
         throw FormatError("Unsupported audio source format");
     }
+    matrix.emplace(SpeakerLayout(format.Channels), outputLayout);
+    outputChannels = matrix->GetOutputChannels();
     endFrame = settings.EndFrame.value_or(format.Frames);
     if (endFrame > format.Frames || settings.StartFrame > endFrame) throw FormatError("Invalid voice playback range");
     if (settings.Repeats < -1 || (settings.Repeats && (settings.LoopBegin >= settings.LoopEnd || settings.LoopEnd > endFrame))) {
@@ -71,7 +73,7 @@ std::optional<std::uint64_t> Voice::FramesUntilEnd(float masterPitch) const {
     }
     return settings.DelayFrames + static_cast<std::uint64_t>(frames);
 }
-std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
+std::array<float, 8> Voice::readFrame(std::uint64_t frame) {
     for (const auto& cached : recent) {
         if (cached.Valid && cached.Position == frame) return cached.Value;
     }
@@ -90,10 +92,8 @@ std::array<float, 2> Voice::readFrame(std::uint64_t frame) {
     recentIndex = (recentIndex + 1) % recent.size();
     cached.Position = frame;
     cached.Valid = true;
-    if (format.Channels == 1) {
-        const auto value = buffer[offset] * 0.7071067811865475244f;
-        cached.Value = {value, value};
-    } else cached.Value = {buffer[offset], buffer[offset + 1]};
+    cached.Value.fill(0);
+    matrix->Add(buffer.data() + offset, cached.Value.data(), 1);
     return cached.Value;
 }
 VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch) {
@@ -114,8 +114,8 @@ VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, fl
         else if (next == endFrame) next = frame;
         const auto first = readFrame(frame);
         const auto second = fraction ? readFrame(next) : first;
-        for (std::size_t channel = 0; channel < 2; ++channel) {
-            stereo[output * 2 + channel] += (first[channel] + (second[channel] - first[channel]) * fraction) * gain;
+        for (std::size_t channel = 0; channel < outputChannels; ++channel) {
+            stereo[output * outputChannels + channel] += (first[channel] + (second[channel] - first[channel]) * fraction) * gain;
         }
         position += step;
     }

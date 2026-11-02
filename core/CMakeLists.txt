@@ -14,6 +14,7 @@ add_library(OpenFmod STATIC
     src/Audio/Mixer.cpp
     src/Audio/Graph.cpp
     src/Audio/Spatial/Layout.cpp
+    src/Audio/Spatial/MixMatrix.cpp
     src/Audio/Spatial/Speakers.cpp
     src/Audio/Spatial/Panner.cpp
     src/Audio/Spatial/PannerMatrix.cpp

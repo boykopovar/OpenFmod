@@ -4,11 +4,11 @@
 #include <cmath>
 #include <limits>
 namespace OpenFmod::Audio {
-Mixer::Mixer(std::uint32_t rate) : rate(rate) {
+Mixer::Mixer(std::uint32_t rate, SpeakerMode layout) : rate(rate), layout(layout), channels(Speakers(layout).GetChannels()) {
     if (!rate) throw FormatError("Invalid output sample rate");
 }
 std::uint64_t Mixer::Play(std::unique_ptr<IAudioSource> source, VoiceSettings settings) {
-    Voice voice(std::move(source), settings, rate);
+    Voice voice(std::move(source), settings, rate, layout);
     std::lock_guard<std::mutex> lock(mutex);
     if (!nextId) throw FormatError("Audio voice identifier overflow");
     const auto id = nextId++;
@@ -62,14 +62,14 @@ std::optional<std::uint64_t> Mixer::FramesUntilNextEnd() const {
     return result;
 }
 void Mixer::Render(float* stereo, std::size_t frames) {
-    if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) throw FormatError("Invalid mixer output buffer");
+    if (frames > std::numeric_limits<std::size_t>::max() / channels || (frames && !stereo)) throw FormatError("Invalid mixer output buffer");
     std::lock_guard<std::mutex> lock(mutex);
-    if (frames) std::fill_n(stereo, frames * 2, 0.0f);
+    if (frames) std::fill_n(stereo, frames * channels, 0.0f);
     for (auto iterator = voices.begin(); iterator != voices.end();) {
         if (!iterator->second.Mix(stereo, frames, gain, pitch).Playing) iterator = voices.erase(iterator);
         else ++iterator;
     }
-    for (std::size_t index = 0; index < frames * 2; ++index) {
+    for (std::size_t index = 0; index < frames * channels; ++index) {
         if (!std::isfinite(stereo[index])) throw FormatError("Nonfinite mixer output");
     }
 }

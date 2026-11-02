@@ -2,6 +2,8 @@
 #include "OpenFmod/Audio/Graph.hpp"
 #include "OpenFmod/Studio/Playback/Sound.hpp"
 #include <algorithm>
+#include <cmath>
+#include "OpenFmod/Audio/PcmSource.hpp"
 #include <stdexcept>
 #include <vector>
 namespace {
@@ -42,6 +44,27 @@ private:
 };
 }
 void CheckMixer() {
+    {
+        using namespace OpenFmod::Audio;
+        auto impulse = std::make_shared<PcmData>();
+        impulse->Layout = {48000, 6, 1};
+        impulse->Samples = {1, 0, 0, 0, 0, 0};
+        Mixer stereo(48000);
+        stereo.Play(std::make_unique<PcmSource>(impulse));
+        std::array<float, 2> output{};
+        stereo.Render(output.data(), 1);
+        if (std::abs(output[0] - 0.72000295f) > 0.000001f || output[1] != 0) throw std::runtime_error("Surround front channel was not downmixed");
+        auto mono = std::make_shared<PcmData>();
+        mono->Layout = {48000, 1, 1};
+        mono->Samples = {1};
+        Mixer surround(48000, SpeakerMode::Surround51);
+        surround.Play(std::make_unique<PcmSource>(mono));
+        std::array<float, 6> expanded{};
+        surround.Render(expanded.data(), 1);
+        for (std::size_t channel = 0; channel < expanded.size(); ++channel) {
+            if (std::abs(expanded[channel] - (channel == 3 ? 0 : 0.4472136f)) > 0.000001f) throw std::runtime_error("Mono surround projection changed channel power");
+        }
+    }
     using namespace OpenFmod::Audio;
     OpenFmod::Sound::Sample looped;
     looped.Rate = 48000;

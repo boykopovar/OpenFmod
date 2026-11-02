@@ -6,7 +6,7 @@
 namespace OpenFmod::Audio {
 class Mixer {
 public:
-    explicit Mixer(std::uint32_t rate);
+    explicit Mixer(std::uint32_t rate, SpeakerMode layout = SpeakerMode::Stereo);
     std::uint64_t Play(std::unique_ptr<IAudioSource> source, VoiceSettings settings = {});
     bool Stop(std::uint64_t voice);
     void Finish(std::uint64_t voice);
@@ -23,6 +23,8 @@ private:
     std::map<std::uint64_t, Voice> voices;
     std::uint64_t nextId{1};
     std::uint32_t rate;
+    SpeakerMode layout;
+    std::size_t channels;
     float gain{1};
     float pitch{1};
 };

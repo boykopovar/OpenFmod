@@ -1,6 +1,7 @@
 #ifndef OPENFMOD_AUDIO_VOICE_HPP
 #define OPENFMOD_AUDIO_VOICE_HPP
 #include "OpenFmod/Audio/IAudioSource.hpp"
+#include "OpenFmod/Audio/Spatial/MixMatrix.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -21,7 +22,7 @@ struct VoiceProgress {
 };
 class Voice {
 public:
-    Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate);
+    Voice(std::unique_ptr<IAudioSource> source, VoiceSettings settings, std::uint32_t outputRate, SpeakerMode outputLayout = SpeakerMode::Stereo);
     VoiceProgress Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch = 1);
     void SetGain(float value);
     void SetPitch(float value);
@@ -30,19 +31,21 @@ public:
 private:
     struct CachedFrame {
         std::uint64_t Position{};
-        std::array<float, 2> Value{};
+        std::array<float, 8> Value{};
         bool Valid{};
     };
-    std::array<float, 2> readFrame(std::uint64_t frame);
+    std::array<float, 8> readFrame(std::uint64_t frame);
     double rateStep(float masterPitch) const;
     void advanceLoop();
     std::unique_ptr<IAudioSource> source;
     VoiceSettings settings;
     Format format;
+    std::optional<MixMatrix> matrix;
+    std::size_t outputChannels{};
     double rateRatio;
     double position{};
     std::uint64_t endFrame{};
-    std::array<float, 1024> buffer{};
+    std::array<float, 4096> buffer{};
     std::uint64_t bufferBegin{};
     std::size_t buffered{};
     std::array<CachedFrame, 2> recent{};
