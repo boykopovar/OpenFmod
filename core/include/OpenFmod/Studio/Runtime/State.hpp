@@ -49,10 +49,14 @@ private:
         const TransitionSequence* Sequence{};
         std::uint32_t SequencePosition{};
         std::uint64_t SequenceGeneration{};
+        std::uint32_t DestinationTick{};
     };
     void updateCursors(std::uint64_t tick);
     InstrumentFrame instrumentFrame(const TimelineTrigger& trigger, const Bank::Guid& instrument) const;
     std::map<std::uint64_t, CursorFrame> cursors;
+    CursorFrame automationCursor;
+    std::map<Bank::Guid, float> controllerOverrides;
+    AutomationBlend controllerBlend(const Bank::Guid& controller, const CursorFrame& cursor) const;
     void initializeMix();
     void updateMix(const AutomationInput& input, double milliseconds);
     bool mixFinished(double milliseconds) const;

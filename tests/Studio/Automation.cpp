@@ -36,6 +36,16 @@ void CheckAutomation() {
     const auto crossfade = state.EvaluateTimeline(20, {TransitionBlend::ToDestination, 0, 0.5f, 80});
     if (plain.Value != 2 || plain.Weight != 1 || outgoing.Value != 5 || incoming.Value != 6
         || crossfade.Value != 5) throw std::runtime_error("Incorrect timeline automation blend");
+    Controller fading = model;
+    fading.PropertyId = 0;
+    Curve bridge({}, {}, {{20, 4, 0, Interpolation::Exponential}, {60, 8, 0, Interpolation::Exponential}});
+    const auto enter = BlendTransitionCurve(fading, bridge, 10, 100, 80);
+    const auto middle = BlendTransitionCurve(fading, bridge, 40, 100, 80);
+    const auto leave = BlendTransitionCurve(fading, bridge, 80, 100, 80);
+    if (enter.Mode != TransitionBlend::FromCurrent || enter.Fraction != 0.5f || enter.Value != 4
+        || middle.Fraction != 1 || middle.Value != 6 || leave.Mode != TransitionBlend::FromDestination
+        || leave.Fraction != 0.5f || leave.Value != 8) throw std::runtime_error("Transition curve lost its entry or exit blend");
+    if (BlendTransitionCurve(model, bridge, 10, 100, 80).Fraction != 0) throw std::runtime_error("Discrete transition property blended before its first point");
     Curve empty({}, {}, {});
     ControllerState sparse(model, empty);
     const auto inactive = sparse.EvaluateTimeline(20);

@@ -16,6 +16,7 @@ struct AutomationBlend {
     float Fraction{};
     std::uint32_t DestinationTick{};
 };
+AutomationBlend BlendTransitionCurve(const Controller& controller, const Curve& curve, std::uint32_t position, std::uint32_t duration, std::uint32_t destinationTick);
 struct AutomationValue {
     float Value{};
     float Weight{};

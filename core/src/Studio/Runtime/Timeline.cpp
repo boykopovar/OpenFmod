@@ -6,9 +6,6 @@ void EventState::Prepare(std::uint32_t ticks) {
     spans.clear();
     std::uint64_t elapsed = 0;
     Transport->Advance(ticks, Input().Parameters, [this] { return Context->Random(); }, [&](const auto& span) {
-        if (span.Sequence && (!span.Sequence->Curves.empty() || !span.Sequence->CurveReplacements.empty())) {
-            throw FormatError("Transition playback requires per cursor automation bindings");
-        }
         spans.push_back({begin + elapsed, span});
         for (auto action : Schedule->Process(span)) actions.push_back({begin + elapsed + action.Delay, std::move(action)});
         elapsed += span.Duration;

@@ -32,7 +32,10 @@ EventState::EventState(std::shared_ptr<RuntimeContext> context, const Bank::Guid
             return Context->Programmer(name);
         });
 }
-AutomationInput EventState::Input() const { return {Position, [this](const auto& id) { return Parameters.GetValue(id); }, {}}; }
+AutomationInput EventState::Input() const {
+    return {Position, [this](const auto& id) { return Parameters.GetValue(id); }, {},
+        [this](const auto& id) { return controllerBlend(id, automationCursor); }};
+}
 void EventState::Start(const SoundStart& position) {
     if (!Available) throw FormatError("Event bank has been unloaded");
     if (!std::isfinite(position.OffsetPercent) || position.OffsetPercent < 0 || position.OffsetPercent > 100 || position.Repeats < -1) throw FormatError("Invalid event start position");
@@ -40,6 +43,8 @@ void EventState::Start(const SoundStart& position) {
     actions.clear();
     spans.clear();
     cursors.clear();
+    automationCursor = {};
+    controllerOverrides.clear();
     ending = false;
     started = updated = Context->Clock.GetTick();
     plannedUntil = started;

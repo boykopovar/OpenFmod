@@ -1,5 +1,6 @@
 #include "OpenFmod/Studio/Automation/Controller.hpp"
 #include <cmath>
+#include <algorithm>
 namespace OpenFmod::Studio {
 Controller ReadController(std::string_view bytes) {
     Binary::Reader reader(bytes);
@@ -9,6 +10,19 @@ Controller ReadController(std::string_view bytes) {
     result.CurveId = Bank::ReadGuid(reader);
     result.PropertyId = static_cast<std::uint32_t>(reader.Unsigned(4));
     reader.Finish();
+    return result;
+}
+AutomationBlend BlendTransitionCurve(const Controller& controller, const Curve& curve, std::uint32_t position, std::uint32_t duration, std::uint32_t destinationTick) {
+    if (!duration || position > duration) throw FormatError("Invalid automation transition position");
+    const auto range = curve.GetTickRange();
+    AutomationBlend result{TransitionBlend::FromCurrent, curve.EvaluateTick(position), 1, destinationTick};
+    if (position < range.first) {
+        result.Fraction = controller.PropertyId == 4 ? (std::abs(curve.EvaluateTick(range.first)) < 0.00000011920929f ? 1.0f : 0.0f)
+            : static_cast<float>(position) / range.first;
+    } else if (position > range.second) {
+        result.Mode = TransitionBlend::FromDestination;
+        result.Fraction = range.second < duration ? std::clamp(static_cast<float>(duration - position) / (duration - range.second), 0.0f, 1.0f) : 0;
+    }
     return result;
 }
 ControllerState::ControllerState(Controller controller, const Curve& curve) : controller(controller), curve(curve) {

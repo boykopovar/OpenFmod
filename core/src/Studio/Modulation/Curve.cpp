@@ -54,6 +54,10 @@ const Bank::Guid& Curve::GetId() const { return id; }
 const Bank::Guid& Curve::GetInput() const { return input; }
 bool Curve::IsEmpty() const { return points.empty(); }
 float Curve::Evaluate(float position) const { return evaluate(position, false); }
+std::pair<std::uint32_t, std::uint32_t> Curve::GetTickRange() const {
+    if (points.empty()) throw FormatError("Empty curve has no tick range");
+    return {points.front().Coordinate, points.back().Coordinate};
+}
 float Curve::EvaluateTick(std::uint32_t tick) const { return evaluate(tick, true); }
 float Curve::evaluate(double position, bool timeline) const {
     if (!std::isfinite(position)) throw FormatError("Nonfinite curve position");

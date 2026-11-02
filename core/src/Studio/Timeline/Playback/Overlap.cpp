@@ -26,6 +26,8 @@ std::uint32_t TimelineTransport::advanceSequence(std::uint32_t ticks, const std:
     span.Duration = count;
     span.Sequence = &definition;
     span.SequencePosition = state.Position;
+    const auto remaining = destinationActive ? definition.Duration - state.Position : definition.DestinationOffset;
+    span.DestinationTick = TimelineEnd(state.Destination.Position, remaining);
     if (sourceActive) span.Cursors[span.Count++] = state.Source;
     if (destinationActive) span.Cursors[span.Count++] = state.Destination;
     span.Cursors[span.Count++] = {state.Position, state.Generation, TimelineRole::Transition, true};

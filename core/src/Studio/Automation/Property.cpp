@@ -9,7 +9,7 @@ PropertyAutomation::PropertyAutomation(const Library& library, Property property
 float PropertyAutomation::Evaluate(float base, const AutomationInput& input, const std::vector<ModulationValue>& modulation) {
     if (modulation.size() != property.Modulators.size()) throw FormatError("Property modulation count mismatch");
     values.clear();
-    for (const auto& curve : property.Curves) values.push_back(bindings.Evaluate(curve, input.Tick, input.Parameters, input.Blend));
+    for (const auto& curve : property.Curves) values.push_back(bindings.Evaluate(curve, input.Tick, input.Parameters, input.ControllerBlends ? input.ControllerBlends(curve) : input.Blend));
     return resolver.Modulate(resolver.Resolve(base, values), modulation);
 }
 const Property& PropertyAutomation::GetModel() const { return property; }

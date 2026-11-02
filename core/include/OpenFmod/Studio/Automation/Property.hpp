@@ -7,6 +7,7 @@ struct AutomationInput {
     std::uint32_t Tick{};
     std::function<float(const Bank::Guid&)> Parameters;
     AutomationBlend Blend;
+    std::function<AutomationBlend(const Bank::Guid&)> ControllerBlends;
 };
 class PropertyAutomation {
 public:

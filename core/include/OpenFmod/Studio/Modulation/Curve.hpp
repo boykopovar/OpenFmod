@@ -16,6 +16,7 @@ public:
     const Bank::Guid& GetId() const;
     const Bank::Guid& GetInput() const;
     bool IsEmpty() const;
+    std::pair<std::uint32_t, std::uint32_t> GetTickRange() const;
     float Evaluate(float position) const;
     float EvaluateTick(std::uint32_t tick) const;
 private:

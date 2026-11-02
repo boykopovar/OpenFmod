@@ -16,6 +16,7 @@ struct TimelineSpan {
     std::size_t Count{};
     const TransitionSequence* Sequence{};
     std::uint32_t SequencePosition{};
+    std::uint32_t DestinationTick{};
 };
 class TimelineTransport {
 public:
