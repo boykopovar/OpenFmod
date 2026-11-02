@@ -49,7 +49,7 @@ float Reverb::filterInput(float input, float fraction) {
     if (settings.LowShelfDecibels != 0) input = shelf.Process({input, input})[0];
     return input;
 }
-std::array<float, 2> Reverb::reverberate(float input, float fraction) {
+std::array<float, 8> Reverb::reverberate(float input, float fraction, std::size_t channels) {
     const auto earlyGain = blend(previous.earlyGain, parameters.earlyGain, fraction);
     const auto lateGain = blend(previous.lateGain, parameters.lateGain, fraction);
     const auto normalization = blend(previous.normalization, parameters.normalization, fraction);
@@ -88,23 +88,37 @@ std::array<float, 2> Reverb::reverberate(float input, float fraction) {
         }
     }
     for (std::size_t index = 0; index < feedback.size(); ++index) feedback[index].Write(mixed[(index + 1) % 8]);
-    std::array<float, 2> output{};
-    for (std::size_t index = 0; index < 8; ++index) {
-        output[index % 2] += index ? earlySpread.Read(parameters.earlyDelays[index - 1] - 1) : early;
-        output[index % 2] += feedback[index].Read(parameters.outputDelays[index] - 1);
+    std::array<float, 8> output{};
+    for (std::size_t channel = 0; channel < channels; ++channel) {
+        float earlyOutput = 0;
+        float lateOutput = 0;
+        for (std::size_t tapIndex = 0; tapIndex < 8 / channels; ++tapIndex) {
+            const auto index = channel + tapIndex * channels;
+            earlyOutput += index ? earlySpread.Read(parameters.earlyDelays[index - 1] - 1) : early;
+            lateOutput += feedback[index].Read(parameters.outputDelays[index] - 1);
+        }
+        output[channel] = earlyOutput + lateOutput;
     }
     return output;
 }
-void Reverb::Process(float* stereo, std::size_t frames) {
-    if ((frames && !stereo) || frames > std::numeric_limits<std::size_t>::max() / 2) throw FormatError("Invalid reverb buffer");
+void Reverb::Process(float* stereo, std::size_t frames) { Process(stereo, frames, 2); }
+void Reverb::Process(float* samples, std::size_t frames, std::size_t channels) {
+    if (!channels || channels > 8 || (frames && !samples) || frames > std::numeric_limits<std::size_t>::max() / channels) {
+        throw FormatError("Invalid reverb buffer");
+    }
     for (std::size_t frame = 0; frame < frames; ++frame) {
-        const auto left = stereo[frame * 2];
-        const auto right = stereo[frame * 2 + 1];
-        if (!std::isfinite(left) || !std::isfinite(right)) throw FormatError("Nonfinite reverb input");
-        const auto wet = reverberate(left + right, static_cast<float>(frame) / frames);
-        stereo[frame * 2] = left * parameters.dryGain + wet[0];
-        stereo[frame * 2 + 1] = right * parameters.dryGain + wet[1];
-        if (!std::isfinite(stereo[frame * 2]) || !std::isfinite(stereo[frame * 2 + 1])) throw FormatError("Nonfinite reverb output");
+        float input = 0;
+        for (std::size_t channel = 0; channel < channels; ++channel) {
+            const auto value = samples[frame * channels + channel];
+            if (!std::isfinite(value)) throw FormatError("Nonfinite reverb input");
+            input += value;
+        }
+        const auto wet = reverberate(input, static_cast<float>(frame) / frames, channels);
+        for (std::size_t channel = 0; channel < channels; ++channel) {
+            auto& value = samples[frame * channels + channel];
+            value = value * parameters.dryGain + wet[channel];
+            if (!std::isfinite(value)) throw FormatError("Nonfinite reverb output");
+        }
     }
     if (frames) previous = parameters;
 }

@@ -12,10 +12,11 @@ public:
     void Configure(ReverbSettings settings);
     void Reset();
     void Process(float* stereo, std::size_t frames) override;
+    void Process(float* samples, std::size_t frames, std::size_t channels);
 private:
     void configure();
     float filterInput(float input, float fraction);
-    std::array<float, 2> reverberate(float input, float fraction);
+    std::array<float, 8> reverberate(float input, float fraction, std::size_t channels);
     std::uint32_t rate;
     ReverbSettings settings;
     DelayLine predelay;
