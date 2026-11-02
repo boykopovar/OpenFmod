@@ -1,7 +1,7 @@
 #ifndef OPENFMOD_AUDIO_FILTERS_MULTIBANDEQ_HPP
 #define OPENFMOD_AUDIO_FILTERS_MULTIBANDEQ_HPP
 #include "OpenFmod/Audio/Filters/EqualizerDesign.hpp"
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 namespace OpenFmod::Audio {
 class MultibandEq final : public IAudioProcessor {
 public:

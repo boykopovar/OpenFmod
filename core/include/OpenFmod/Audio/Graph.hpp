@@ -1,7 +1,8 @@
 #ifndef OPENFMOD_AUDIO_GRAPH_HPP
 #define OPENFMOD_AUDIO_GRAPH_HPP
 #include "OpenFmod/Audio/Mixer.hpp"
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioTransform.hpp"
 #include <vector>
 #include <set>
 namespace OpenFmod::Audio {
@@ -10,7 +11,7 @@ class Graph {
 public:
     explicit Graph(std::uint32_t sampleRate);
     ~Graph();
-    std::uint64_t AddBus(std::uint64_t parent);
+    std::uint64_t AddBus(std::uint64_t parent, SpeakerMode layout = SpeakerMode::Stereo);
     void RemoveBus(std::uint64_t bus);
     void AddDependency(std::uint64_t source, std::uint64_t consumer);
     void RemoveDependency(std::uint64_t source, std::uint64_t consumer);
@@ -18,6 +19,7 @@ public:
     void SetGain(std::uint64_t bus, float gain);
     void SetPitch(std::uint64_t bus, float pitch);
     void AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_ptr<IAudioProcessor> processor);
+    void AddTransform(std::uint64_t bus, ProcessingStage stage, std::shared_ptr<IAudioTransform> processor);
     void Render(float* stereo, std::size_t frames);
     std::optional<std::uint64_t> FramesUntilNextEnd() const;
 private:

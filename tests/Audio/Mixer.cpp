@@ -74,6 +74,23 @@ void CheckMixer() {
     if (loopPosition.StartFrame != 4 || loopPosition.Repeats != 1 || loopPosition.LoopEnd != 5) {
         throw std::runtime_error("Sound offset did not consume completed loop iterations");
     }
+    {
+        auto signal = std::make_shared<PcmData>();
+        signal->Layout = {48000, 2, 1};
+        signal->Samples = {1, 0};
+        Graph routed(48000);
+        const auto surround = routed.AddBus(0, SpeakerMode::Surround51);
+        const auto stereo = routed.AddBus(surround);
+        routed.GetMixer(stereo).Play(std::make_unique<PcmSource>(signal));
+        std::array<float, 2> output{};
+        routed.Render(output.data(), 1);
+        if (std::abs(output[0] - 0.72000295f) > 0.000001f || output[1] != 0) throw std::runtime_error("Bus routing collapsed intermediate surround channels");
+        routed.AddProcessor(surround, ProcessingStage::BeforeFader, std::make_shared<Offset>());
+        bool rejected = false;
+        try { routed.Render(output.data(), 1); }
+        catch (const std::runtime_error&) { rejected = true; }
+        if (!rejected) throw std::runtime_error("Stereo DSP accepted a surround buffer");
+    }
     Voice frozen(std::make_unique<Signal>(), VoiceSettings{}, 4);
     frozen.SetPitch(0);
     std::array<float, 4> frozenOutput{};

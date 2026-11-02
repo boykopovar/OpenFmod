@@ -1,7 +1,7 @@
 #ifndef OPENFMOD_AUDIO_FILTERS_THREEBANDEQ_HPP
 #define OPENFMOD_AUDIO_FILTERS_THREEBANDEQ_HPP
 #include "OpenFmod/Audio/Filters/Biquad.hpp"
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 namespace OpenFmod::Audio {
 struct ThreeBandSettings {
     std::array<float, 3> GainDecibels{};

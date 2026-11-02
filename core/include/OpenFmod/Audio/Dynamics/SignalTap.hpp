@@ -1,6 +1,6 @@
 #ifndef OPENFMOD_AUDIO_DYNAMICS_SIGNALTAP_HPP
 #define OPENFMOD_AUDIO_DYNAMICS_SIGNALTAP_HPP
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 #include <vector>
 namespace OpenFmod::Audio {
 class SignalTap final : public IAudioProcessor {

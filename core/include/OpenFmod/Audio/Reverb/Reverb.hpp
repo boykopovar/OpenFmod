@@ -2,7 +2,7 @@
 #define OPENFMOD_AUDIO_REVERB_REVERB_HPP
 #include "OpenFmod/Audio/Delay/Line.hpp"
 #include "OpenFmod/Audio/Filters/Biquad.hpp"
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 #include "OpenFmod/Audio/Reverb/Settings.hpp"
 #include <array>
 namespace OpenFmod::Audio {

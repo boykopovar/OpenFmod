@@ -1,6 +1,6 @@
 #ifndef OPENFMOD_AUDIO_DYNAMICS_COMPRESSOR_HPP
 #define OPENFMOD_AUDIO_DYNAMICS_COMPRESSOR_HPP
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 #include <array>
 #include <cstdint>
 namespace OpenFmod::Audio {

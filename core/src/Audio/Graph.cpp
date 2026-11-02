@@ -3,20 +3,24 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <variant>
 namespace OpenFmod::Audio {
 struct Graph::Bus {
-    explicit Bus(std::uint32_t rate, std::uint64_t parent) : parent(parent), mixer(rate) {}
+    using Processor = std::variant<std::shared_ptr<IAudioProcessor>, std::shared_ptr<IAudioTransform>>;
+    Bus(std::uint32_t rate, std::uint64_t parent, SpeakerMode layout) : parent(parent), mixer(rate, layout), layout(layout) {}
     std::uint64_t parent;
     Mixer mixer;
+    SpeakerMode layout;
+    std::vector<float> scratch;
     float gain{1};
     float pitch{1};
     float effectivePitch{1};
     std::vector<float> buffer;
-    std::vector<std::shared_ptr<IAudioProcessor>> before;
-    std::vector<std::shared_ptr<IAudioProcessor>> after;
+    std::vector<Processor> before;
+    std::vector<Processor> after;
 };
 Graph::Graph(std::uint32_t sampleRate) : sampleRate(sampleRate) {
-    buses.emplace(0, std::make_unique<Bus>(sampleRate, 0));
+    buses.emplace(0, std::make_unique<Bus>(sampleRate, 0, SpeakerMode::Stereo));
 }
 Graph::~Graph() = default;
 Graph::Bus& Graph::requireBus(std::uint64_t id) {
@@ -24,11 +28,11 @@ Graph::Bus& Graph::requireBus(std::uint64_t id) {
     if (found == buses.end()) throw FormatError("Unknown audio bus");
     return *found->second;
 }
-std::uint64_t Graph::AddBus(std::uint64_t parent) {
+std::uint64_t Graph::AddBus(std::uint64_t parent, SpeakerMode layout) {
     requireBus(parent);
     if (!nextId) throw FormatError("Audio bus identifier overflow");
     const auto id = nextId++;
-    buses.emplace(id, std::make_unique<Bus>(sampleRate, parent));
+    buses.emplace(id, std::make_unique<Bus>(sampleRate, parent, layout));
     auto& node = requireBus(id);
     node.effectivePitch = requireBus(parent).effectivePitch;
     node.mixer.SetPitch(node.effectivePitch);
@@ -100,6 +104,13 @@ void Graph::AddProcessor(std::uint64_t bus, ProcessingStage stage, std::shared_p
     auto& chain = stage == ProcessingStage::BeforeFader ? node.before : node.after;
     chain.push_back(std::move(processor));
 }
+void Graph::AddTransform(std::uint64_t bus, ProcessingStage stage, std::shared_ptr<IAudioTransform> processor) {
+    if (!processor) throw FormatError("Missing audio transform");
+    if (stage != ProcessingStage::BeforeFader && stage != ProcessingStage::AfterFader) throw FormatError("Invalid audio processing stage");
+    auto& node = requireBus(bus);
+    auto& chain = stage == ProcessingStage::BeforeFader ? node.before : node.after;
+    chain.push_back(std::move(processor));
+}
 void Graph::SetPitch(std::uint64_t bus, float pitch) {
     auto& target = requireBus(bus);
     if (!std::isfinite(pitch) || pitch <= 0) throw FormatError("Invalid audio bus pitch");
@@ -118,7 +129,7 @@ void Graph::SetPitch(std::uint64_t bus, float pitch) {
     }
 }
 void Graph::Render(float* stereo, std::size_t frames) {
-    if (frames > std::numeric_limits<std::size_t>::max() / 2 || (frames && !stereo)) {
+    if (frames > std::numeric_limits<std::size_t>::max() / 8 || (frames && !stereo)) {
         throw FormatError("Invalid audio graph output buffer");
     }
     if (!frames) {
@@ -128,23 +139,42 @@ void Graph::Render(float* stereo, std::size_t frames) {
         }
         return;
     }
-    const auto samples = frames * 2;
     for (auto& entry : buses) {
         auto& node = *entry.second;
-        node.buffer.resize(samples);
+        node.buffer.resize(frames * Speakers(node.layout).GetChannels());
         node.mixer.Render(node.buffer.data(), frames);
     }
     for (const auto id : order) {
         auto& node = requireBus(id);
-        for (auto& processor : node.before) processor->Process(node.buffer.data(), frames);
+        auto layout = node.layout;
+        auto process = [&](const auto& chain) {
+            for (const auto& processor : chain) {
+                if (const auto stereoProcessor = std::get_if<std::shared_ptr<IAudioProcessor>>(&processor)) {
+                    if (layout != SpeakerMode::Stereo) throw FormatError("Stereo processor received a different channel layout");
+                    (*stereoProcessor)->Process(node.buffer.data(), frames);
+                } else {
+                    const auto& transform = std::get<std::shared_ptr<IAudioTransform>>(processor);
+                    const auto outputLayout = transform->GetOutputLayout(layout);
+                    node.scratch.resize(frames * Speakers(outputLayout).GetChannels());
+                    transform->Process(node.buffer.data(), node.scratch.data(), frames, layout);
+                    node.buffer.swap(node.scratch);
+                    layout = outputLayout;
+                }
+            }
+        };
+        process(node.before);
         for (auto& value : node.buffer) value *= node.gain;
-        for (auto& processor : node.after) processor->Process(node.buffer.data(), frames);
+        process(node.after);
         for (const auto value : node.buffer) {
             if (!std::isfinite(value)) throw FormatError("Nonfinite audio graph output");
         }
         if (id) {
             auto& parent = requireBus(node.parent);
-            for (std::size_t index = 0; index < samples; ++index) parent.buffer[index] += node.buffer[index];
+            MixMatrix(layout, parent.layout).Add(node.buffer.data(), parent.buffer.data(), frames);
+        } else if (layout != SpeakerMode::Stereo) {
+            node.scratch.assign(frames * 2, 0);
+            MixMatrix(layout, SpeakerMode::Stereo).Add(node.buffer.data(), node.scratch.data(), frames);
+            node.buffer.swap(node.scratch);
         }
     }
     const auto& output = requireBus(0).buffer;

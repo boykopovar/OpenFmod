@@ -1,6 +1,6 @@
 #ifndef OPENFMOD_AUDIO_SPATIAL_PANNER_HPP
 #define OPENFMOD_AUDIO_SPATIAL_PANNER_HPP
-#include "OpenFmod/Audio/IAudioProcessor.hpp"
+#include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 #include "OpenFmod/Audio/Spatial/Speakers.hpp"
 #include "OpenFmod/Audio/Spatial/Projection.hpp"
 #include <array>
