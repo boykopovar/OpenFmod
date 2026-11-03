@@ -58,6 +58,8 @@ private:
     std::set<Key> resolving;
     std::set<std::pair<std::uint64_t, std::uint64_t>> connections;
     std::uint64_t nextScope{1};
+    std::optional<std::uint64_t> registryRevision;
+    bool connectionsDirty{true};
 };
 }
 #endif

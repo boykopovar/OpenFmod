@@ -58,6 +58,7 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
             attach(node, model->PostEffects, Audio::ProcessingStage::AfterFader);
             applySnapshots(node);
             nodes.emplace(identity, node);
+            connectionsDirty = true;
         } catch (...) {
             graph.RemoveBus(node.AudioId);
             throw;

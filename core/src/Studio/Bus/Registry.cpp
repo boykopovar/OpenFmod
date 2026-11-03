@@ -1,6 +1,7 @@
 #include "OpenFmod/Studio/Bus/Graph.hpp"
 namespace OpenFmod::Studio {
 void BusGraph::Refresh() {
+    if (registryRevision == library.GetRevision()) return;
     std::map<Bank::Guid, std::shared_ptr<const Bus>> buses;
     std::map<Bank::Guid, std::shared_ptr<const Sidechain>> sidechains;
     for (auto model : library.GetAll<Bus>()) buses.emplace(model->Id, std::move(model));
@@ -24,5 +25,7 @@ void BusGraph::Refresh() {
     }
     providers.swap(nextProviders);
     controls.swap(nextControls);
+    registryRevision = library.GetRevision();
+    connectionsDirty = true;
 }
 }

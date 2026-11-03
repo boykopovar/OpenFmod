@@ -37,10 +37,18 @@ void BusGraph::RemoveScope(std::uint64_t scope) {
     std::sort(removed.begin(), removed.end(), std::greater<std::uint64_t>{});
     for (const auto id : removed) graph.RemoveBus(id);
     for (auto node = nodes.begin(); node != nodes.end();) {
-        if (node->first.first == scope) node = nodes.erase(node);
+        if (node->first.first == scope) {
+            if (!library.Contains<Bus>(node->second.Model->Id)) registryRevision.reset();
+            for (const auto& [id, model] : node->second.Sidechains) {
+                if (!library.Contains<Sidechain>(id)) registryRevision.reset();
+                static_cast<void>(model);
+            }
+            node = nodes.erase(node);
+        }
         else ++node;
     }
     scopes.erase(scope);
+    connectionsDirty = true;
     connect();
 }
 }

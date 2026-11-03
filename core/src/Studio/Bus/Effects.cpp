@@ -23,6 +23,8 @@ void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::
     }
 }
 void BusGraph::connect() {
+    Refresh();
+    if (!connectionsDirty) return;
     std::size_t previous;
     do {
         previous = nodes.size();
@@ -58,5 +60,6 @@ void BusGraph::connect() {
             processor->SetSidechains(std::move(taps));
         }
     }
+    connectionsDirty = false;
 }
 }
