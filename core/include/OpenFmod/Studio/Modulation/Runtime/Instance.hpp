@@ -11,6 +11,7 @@ public:
     ModulationInstance(Modulation model, std::shared_ptr<const Mapping> mapping, bool discrete, bool angular, float random);
     ModulationValue Evaluate(double milliseconds) const;
     void ProcessAudio(const float* samples, std::size_t count, double milliseconds);
+    void ProcessMeter(float peak, float energy, double milliseconds);
     void Release(double milliseconds);
     bool IsFinished(double milliseconds) const;
 private:

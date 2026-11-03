@@ -1,9 +1,18 @@
+#include <array>
+#include "OpenFmod/Audio/Dynamics/SignalTap.hpp"
 #include "OpenFmod/Audio/Dynamics/Compressor.hpp"
 #include <cmath>
 #include <stdexcept>
 #include <vector>
 void CheckDynamics() {
     using namespace OpenFmod::Audio;
+    SignalTap meter;
+    const std::array<float, 8> measured{1, -1, 0.5f, -0.5f, 0, 0, 0, 0};
+    std::array<float, 8> copied{};
+    meter.SetGain(0.5f);
+    meter.Process(measured.data(), copied.data(), 2, SpeakerMode::Quad);
+    const auto level = meter.GetMeter();
+    if (copied != measured || level.Peak != 0.5f || level.Energy != 0.3125f) throw std::runtime_error("Sidechain meter downmixed or averaged its source channels");
     CompressorSettings settings;
     settings.ThresholdDecibels = -20;
     settings.Ratio = 2;

@@ -6,6 +6,7 @@ class FollowerState {
 public:
     explicit FollowerState(EnvelopeFollower parameters);
     float Process(const float* samples, std::size_t count, double milliseconds);
+    float ProcessLevel(double amplitude, double milliseconds);
     float GetLevel() const;
 private:
     EnvelopeFollower parameters;

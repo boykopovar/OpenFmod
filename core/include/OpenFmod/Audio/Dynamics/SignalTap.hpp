@@ -4,14 +4,21 @@
 #include <vector>
 #include "OpenFmod/Audio/Processing/IAudioTransform.hpp"
 namespace OpenFmod::Audio {
+struct SignalMeter {
+    float Peak{};
+    float Energy{};
+};
 class SignalTap final : public IAudioProcessor, public IAudioTransform {
 public:
     void SetGain(float value);
+    SignalMeter GetMeter() const;
     void Process(float* stereo, std::size_t frames) override;
     SpeakerMode GetOutputLayout(SpeakerMode input) const override;
     void Process(const float* input, float* output, std::size_t frames, SpeakerMode inputLayout) override;
     const std::vector<float>& GetSamples(std::size_t frames) const;
 private:
+    void measure(const float* input, std::size_t frames, std::size_t channels);
+    SignalMeter meter;
     float gain{1};
     std::vector<float> samples;
     bool initialized{};

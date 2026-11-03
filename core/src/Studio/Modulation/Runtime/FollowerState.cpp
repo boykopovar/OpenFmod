@@ -22,6 +22,10 @@ float FollowerState::Process(const float* samples, std::size_t count, double mil
         else amplitude = std::max(amplitude, std::abs(value));
     }
     if (parameters.RootMeanSquare) amplitude = std::sqrt(amplitude);
+    return ProcessLevel(amplitude, milliseconds);
+}
+float FollowerState::ProcessLevel(double amplitude, double milliseconds) {
+    if (!std::isfinite(amplitude) || amplitude < 0 || !std::isfinite(milliseconds) || milliseconds < 0) throw FormatError("Invalid follower meter input");
     const auto decibels = amplitude > 0 ? 20 * std::log10(amplitude) : -80;
     const auto target = static_cast<float>((std::clamp(decibels, static_cast<double>(parameters.MinimumDecibels),
         static_cast<double>(parameters.MaximumDecibels)) - parameters.MinimumDecibels)

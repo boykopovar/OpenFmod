@@ -41,6 +41,12 @@ void ModulationInstance::ProcessAudio(const float* samples, std::size_t count, d
     if (!follower) throw FormatError("Audio input requires an envelope follower");
     follower->Process(samples, count, milliseconds);
 }
+void ModulationInstance::ProcessMeter(float peak, float energy, double milliseconds) {
+    auto* follower = std::get_if<FollowerState>(&state);
+    if (!follower) throw FormatError("Meter input requires an envelope follower");
+    if (!std::isfinite(peak) || peak < 0 || !std::isfinite(energy) || energy < 0) throw FormatError("Invalid modulation meter");
+    follower->ProcessLevel(std::get<EnvelopeFollower>(model.Parameters).RootMeanSquare ? std::sqrt(energy) : peak, milliseconds);
+}
 void ModulationInstance::Release(double milliseconds) {
     if (!std::isfinite(milliseconds) || milliseconds < 0) throw FormatError("Invalid modulation release time");
     if (released) throw FormatError("Modulation instance has already been released");
