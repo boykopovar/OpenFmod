@@ -76,10 +76,10 @@ void EventState::Start(const SoundStart& position) {
     Update();
 }
 void EventState::Stop(bool immediate) {
-    if (State == PlaybackState::Stopped) return;
+    if (State == PlaybackState::Stopped || (!immediate && State == PlaybackState::Stopping)) return;
     const auto tick = Context->Clock.GetTick();
     Instruments->Stop(immediate, tick);
-    for (auto& entry : mix) entry.second->Release(static_cast<double>(tick - started) / 48);
+    if (!immediate) for (auto& entry : mix) entry.second->Release(static_cast<double>(tick - started) / 48);
     if (Snapshot) Snapshot->Stop(immediate, static_cast<double>(tick - started) / 48);
     actions.clear();
     State = immediate ? PlaybackState::Stopped : PlaybackState::Stopping;
