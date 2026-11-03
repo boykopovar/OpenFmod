@@ -20,7 +20,7 @@ void SignalTap::Process(float* stereo, std::size_t frames) {
     initialized = true;
 }
 SpeakerMode SignalTap::GetOutputLayout(SpeakerMode input) const {
-    static_cast<void>(Speakers(input));
+    static_cast<void>(SpeakerChannels(input));
     return input;
 }
 void SignalTap::Process(const float* input, float* output, std::size_t frames, SpeakerMode inputLayout) {

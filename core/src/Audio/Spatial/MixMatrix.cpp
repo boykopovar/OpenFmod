@@ -15,10 +15,9 @@ SpeakerMode SpeakerLayout(std::size_t channels) {
     }
 }
 MixMatrix::MixMatrix(SpeakerMode input, SpeakerMode output)
-    : identity(input == output), inputChannels(SpeakerChannels(input)), outputChannels(SpeakerChannels(output)), coefficients(inputChannels * outputChannels) {
-    if (input == output) {
-        for (std::size_t channel = 0; channel < inputChannels; ++channel) coefficients[channel * inputChannels + channel] = 1;
-    } else if (output == SpeakerMode::Stereo) coefficients = Speakers(input).StereoDownmix();
+    : identity(input == output), inputChannels(SpeakerChannels(input)), outputChannels(SpeakerChannels(output)), coefficients(identity ? 0 : inputChannels * outputChannels) {
+    if (identity) return;
+    if (output == SpeakerMode::Stereo) coefficients = Speakers(input).StereoDownmix();
     else if (input == SpeakerMode::Mono) {
         const bool lowFrequency = outputChannels >= 6;
         const auto gain = 1 / std::sqrt(static_cast<float>(outputChannels - lowFrequency));
