@@ -106,8 +106,17 @@ void CheckProject() {
     if (!rejected || library.GetRevision() != revision || library.Require<Curve>(id).Evaluate(0) != 3) {
         throw std::runtime_error("Conflicting bank load changed the resource library");
     }
+    graph.SetVolume(event.InputBus, 0.25f);
     library.Unload(second);
-    if (library.GetRevision() != revision + 1) throw std::runtime_error("Bank unload did not invalidate cached resource indices");
+    graph.Refresh();
+    library.Load(project(4, 3));
+    graph.Refresh();
+    graph.GetMixer(event.InputBus).Play(std::make_unique<OpenFmod::Audio::PcmSource>(pcm));
+    graph.Render(silent.data(), 16);
+    for (const auto value : silent) if (value != 1) throw std::runtime_error("Reloaded bank retained an unloaded bus processor or control");
+    library.Unload(OpenFmod::Bank::Guid{4});
+    graph.Refresh();
+    if (library.GetRevision() != revision + 3) throw std::runtime_error("Bank unload did not invalidate cached resource indices");
     if (retained->Evaluate(0) != 3) throw std::runtime_error("Active resource did not survive bank unload");
     try { library.Require<Curve>(id); }
     catch (const OpenFmod::FormatError&) { return; }

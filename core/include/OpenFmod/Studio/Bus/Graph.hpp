@@ -22,6 +22,7 @@ public:
     std::optional<std::uint64_t> FramesUntilNextEnd() const;
 private:
     using Key = std::pair<std::uint64_t, Bank::Guid>;
+    using NodeRemoval = std::map<std::uint64_t, Key, std::greater<std::uint64_t>>;
     struct Scope {
         Bank::Guid Master;
         Bank::Guid Input;
@@ -30,6 +31,7 @@ private:
     };
     struct Node {
         std::uint64_t AudioId{};
+        std::uint64_t ParentAudioId{};
         std::shared_ptr<const Bus> Model;
         float BaseGain{1};
         float BasePitch{1};
@@ -46,6 +48,8 @@ private:
     std::uint64_t resolve(const Bank::Guid& bus, std::uint64_t scope);
     void attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage);
     void connect();
+    void prune();
+    void removeNodes(const NodeRemoval& removed);
     void updateEffects(std::size_t frames);
     std::vector<Bank::Guid> sourceBuses(const Bank::Guid& target) const;
     void applySnapshots(Node& node);

@@ -2,6 +2,7 @@
 namespace OpenFmod::Studio {
 void BusGraph::Refresh() {
     if (registryRevision == library.GetRevision()) return;
+    prune();
     std::map<Bank::Guid, std::shared_ptr<const Bus>> buses;
     std::map<Bank::Guid, std::shared_ptr<const Sidechain>> sidechains;
     for (auto model : library.GetAll<Bus>()) buses.emplace(model->Id, std::move(model));

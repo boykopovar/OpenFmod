@@ -15,6 +15,7 @@ void System::UnloadBank(const Bank::Guid& bank) {
         if (instance->state->BankId == bank) {
             instance->Stop(true);
             instance->state->Available = false;
+            instance->state->Routing.reset();
         }
     }
     context->Resources.Unload(bank);

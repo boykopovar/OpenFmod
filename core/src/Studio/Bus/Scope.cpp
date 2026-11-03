@@ -25,30 +25,64 @@ void BusGraph::RemoveScope(std::uint64_t scope) {
         if (child.Parent == scope) throw FormatError("Cannot remove a bus scope with nested events");
         static_cast<void>(id);
     }
-    std::vector<std::uint64_t> removed;
-    for (const auto& [identity, node] : nodes) if (identity.first == scope) removed.push_back(node.AudioId);
+    NodeRemoval removed;
+    for (const auto& [identity, node] : nodes) if (identity.first == scope) removed.emplace(node.AudioId, identity);
+    removeNodes(removed);
+    scopes.erase(scope);
+    connectionsDirty = true;
+    prune();
+    connect();
+}
+void BusGraph::prune() {
+    if (std::none_of(nodes.begin(), nodes.end(), [&](const auto& entry) {
+        return !entry.first.first && !library.Contains<Bus>(entry.second.Model->Id);
+    })) return;
+    std::set<std::uint64_t> retained;
+    for (const auto& [identity, node] : nodes) {
+        if (identity.first || library.Contains<Bus>(node.Model->Id)) retained.insert(node.AudioId);
+    }
+    std::size_t previous;
+    do {
+        previous = retained.size();
+        std::set<Bank::Guid> modulators;
+        for (const auto& [identity, node] : nodes) if (retained.count(node.AudioId)) {
+            retained.insert(node.ParentAudioId);
+            for (const auto& [id, effect] : node.EffectModels) for (const auto& [property, settings] : effect->Properties) {
+                modulators.insert(settings.Modulators.begin(), settings.Modulators.end());
+                static_cast<void>(id);
+                static_cast<void>(property);
+            }
+            static_cast<void>(identity);
+        }
+        for (const auto& edge : connections) if (retained.count(edge.second)) retained.insert(edge.first);
+        for (const auto& [identity, node] : nodes) for (const auto& [id, sidechain] : node.Sidechains) {
+            for (const auto& follower : sidechain->Followers) if (modulators.count(follower)) retained.insert(node.AudioId);
+            static_cast<void>(identity);
+            static_cast<void>(id);
+        }
+    } while (retained.size() != previous);
+    NodeRemoval removed;
+    for (const auto& [identity, node] : nodes) if (!retained.count(node.AudioId)) removed.emplace(node.AudioId, identity);
+    removeNodes(removed);
+}
+void BusGraph::removeNodes(const NodeRemoval& removed) {
+    if (removed.empty()) return;
     for (auto edge = connections.begin(); edge != connections.end();) {
-        if (std::find(removed.begin(), removed.end(), edge->first) != removed.end()
-            || std::find(removed.begin(), removed.end(), edge->second) != removed.end()) {
+        if (removed.count(edge->first) || removed.count(edge->second)) {
             graph.RemoveDependency(edge->first, edge->second);
             edge = connections.erase(edge);
         } else ++edge;
     }
-    std::sort(removed.begin(), removed.end(), std::greater<std::uint64_t>{});
-    for (const auto id : removed) graph.RemoveBus(id);
-    for (auto node = nodes.begin(); node != nodes.end();) {
-        if (node->first.first == scope) {
-            if (!library.Contains<Bus>(node->second.Model->Id)) registryRevision.reset();
-            for (const auto& [id, model] : node->second.Sidechains) {
-                if (!library.Contains<Sidechain>(id)) registryRevision.reset();
-                static_cast<void>(model);
-            }
-            node = nodes.erase(node);
+    for (const auto& [id, identity] : removed) {
+        const auto& node = nodes.at(identity);
+        if (!library.Contains<Bus>(node.Model->Id)) registryRevision.reset();
+        for (const auto& [sidechain, model] : node.Sidechains) {
+            if (!library.Contains<Sidechain>(sidechain)) registryRevision.reset();
+            static_cast<void>(model);
         }
-        else ++node;
+        graph.RemoveBus(id);
+        nodes.erase(identity);
     }
-    scopes.erase(scope);
     connectionsDirty = true;
-    connect();
 }
 }

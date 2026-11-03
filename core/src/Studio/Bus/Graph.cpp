@@ -47,6 +47,7 @@ std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
         const auto parentId = parent == Bank::Guid{} ? 0 : resolve(parent, parentScope);
         Node node;
         node.Model = model;
+        node.ParentAudioId = parentId;
         const auto levels = baseLevels(*model);
         node.BaseGain = VolumeGain(levels.VolumeDecibels);
         node.BasePitch = PitchRatio(levels.PitchSemitones);
