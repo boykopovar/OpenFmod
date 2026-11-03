@@ -4,6 +4,7 @@
 #include "OpenFmod/Studio/Project/Library.hpp"
 #include "OpenFmod/Studio/Effect/Processor.hpp"
 #include "OpenFmod/Studio/Snapshot/Mix.hpp"
+#include "OpenFmod/Studio/Automation/PropertySet.hpp"
 namespace OpenFmod::Studio {
 class BusGraph {
 public:
@@ -37,6 +38,7 @@ private:
         float UserPitch{1};
         std::map<Bank::Guid, std::shared_ptr<const Effect>> EffectModels;
         std::map<Bank::Guid, std::shared_ptr<EffectProcessor>> Effects;
+        std::map<Bank::Guid, std::shared_ptr<PropertySet>> EffectProperties;
         std::map<Bank::Guid, std::shared_ptr<Audio::SignalTap>> Taps;
         std::map<Bank::Guid, std::shared_ptr<const Sidechain>> Sidechains;
     };
@@ -44,12 +46,16 @@ private:
     std::uint64_t resolve(const Bank::Guid& bus, std::uint64_t scope);
     void attach(Node& node, const std::vector<BusEffect>& effects, Audio::ProcessingStage stage);
     void connect();
+    void updateEffects(std::size_t frames);
+    std::vector<Bank::Guid> sourceBuses(const Bank::Guid& target) const;
     void applySnapshots(Node& node);
     float snapshotProperty(const Bank::Guid& target, std::uint32_t id, float base, const std::map<std::uint32_t, Property>& properties, AutomationType type) const;
     MixControls baseLevels(const Bus& bus, const std::optional<MixControls>& animated = {}) const;
     const Library& library;
     std::uint32_t sampleRate;
     Audio::Graph graph;
+    AutomationBindings effectBindings;
+    double effectMilliseconds{};
     SnapshotMix snapshots;
     std::map<std::uint64_t, Scope> scopes;
     std::map<Key, Node> nodes;

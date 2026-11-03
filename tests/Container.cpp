@@ -24,6 +24,7 @@ void CheckProject();
 void CheckMultiPlayback();
 void CheckPlaybackCommands();
 void CheckTimelineScan();
+void CheckEffectFollower();
 int main() {
     CheckCatalog();
     CheckSound();
@@ -42,6 +43,7 @@ int main() {
     CheckInstrument();
     CheckParameter();
     CheckEffect();
+    CheckEffectFollower();
     CheckSnapshot();
     CheckProject();
     CheckMultiPlayback();

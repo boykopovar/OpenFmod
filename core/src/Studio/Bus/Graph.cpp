@@ -3,7 +3,7 @@
 #include <cmath>
 namespace OpenFmod::Studio {
 BusGraph::BusGraph(const Library& library, std::uint32_t sampleRate)
-    : library(library), sampleRate(sampleRate), graph(sampleRate) {
+    : library(library), sampleRate(sampleRate), graph(sampleRate), effectBindings(library, Event{}) {
     Refresh();
 }
 BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
@@ -83,7 +83,10 @@ void BusGraph::SetVolume(const Bank::Guid& bus, float volume, std::uint64_t scop
     graph.SetGain(id, node.BaseGain * volume);
     node.UserGain = volume;
 }
-void BusGraph::Render(float* stereo, std::size_t frames) { graph.Render(stereo, frames); }
+void BusGraph::Render(float* stereo, std::size_t frames) {
+    if (frames) updateEffects(frames);
+    graph.Render(stereo, frames);
+}
 void BusGraph::SetPitch(const Bank::Guid& bus, float pitch, std::uint64_t scope) {
     if (!std::isfinite(pitch) || pitch <= 0) throw FormatError("Invalid bus pitch");
     const auto id = Resolve(bus, scope);

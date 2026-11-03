@@ -9,3 +9,5 @@ add_test(NAME OpenFmodChecks COMMAND OpenFmodChecks)
 
 
 
+
+target_sources(OpenFmodChecks PRIVATE Studio/Playback/Follower.cpp)

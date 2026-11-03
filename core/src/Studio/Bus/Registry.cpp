@@ -22,6 +22,7 @@ void BusGraph::Refresh() {
     }
     for (const auto& [id, control] : sidechains) {
         for (const auto& effect : control->Effects) nextControls[effect].push_back(id);
+        for (const auto& follower : control->Followers) nextControls[follower].push_back(id);
     }
     providers.swap(nextProviders);
     controls.swap(nextControls);

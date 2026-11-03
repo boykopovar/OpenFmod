@@ -25,7 +25,9 @@ void BusGraph::applySnapshots(Node& node) {
         for (std::size_t i = 0; i < effect->Parameters.size(); ++i) {
             const auto base = std::get_if<float>(&effect->Parameters[i]);
             if (!base) continue;
-            const auto value = snapshotProperty(id, static_cast<std::uint32_t>(1000 + i), *base, effect->Properties, AutomationType::Normal);
+            const auto property = static_cast<std::uint32_t>(1000 + i);
+            const auto animated = node.EffectProperties.find(id);
+            const auto value = snapshotProperty(id, property, animated == node.EffectProperties.end() ? *base : animated->second->Get(property), effect->Properties, AutomationType::Normal);
             node.Effects.at(id)->SetParameter(i, value);
         }
     }

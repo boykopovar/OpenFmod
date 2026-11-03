@@ -8,10 +8,12 @@ public:
     void Update(const AutomationInput& input, double milliseconds);
     float Get(std::uint32_t id) const;
     void SetBase(std::uint32_t id, float value);
+    void ProcessMeter(std::uint32_t property, const Bank::Guid& modulator, float peak, float energy, double milliseconds);
     void Release(double milliseconds);
     bool IsFinished(double milliseconds) const;
     void ProcessAudio(std::uint32_t property, const Bank::Guid& modulator, const float* samples, std::size_t count, double milliseconds);
 private:
+    PropertyInstance& requireInstance(std::uint32_t property);
     std::map<std::uint32_t, float> base;
     std::map<std::uint32_t, float> values;
     std::map<std::uint32_t, PropertyInstance> instances;

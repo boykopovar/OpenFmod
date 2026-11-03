@@ -8,6 +8,13 @@ void BusGraph::attach(Node& node, const std::vector<BusEffect>& effects, Audio::
             node.EffectModels.emplace(item.Id, retained);
             const auto& model = *retained;
             auto processor = std::make_shared<EffectProcessor>(model, sampleRate);
+            if (!model.Properties.empty()) {
+                std::map<std::uint32_t, float> base;
+                for (std::size_t index = 0; index < model.Parameters.size(); ++index) {
+                    if (const auto value = std::get_if<float>(&model.Parameters[index])) base.emplace(static_cast<std::uint32_t>(1000 + index), *value);
+                }
+                node.EffectProperties.emplace(item.Id, std::make_shared<PropertySet>(library, std::move(base), model.Properties, effectBindings, std::function<float()>{}));
+            }
             if (!node.Effects.emplace(item.Id, processor).second) throw FormatError("Duplicate bus effect");
             graph.AddTransform(node.AudioId, stage, std::move(processor));
         } else {
@@ -29,6 +36,11 @@ void BusGraph::connect() {
     do {
         previous = nodes.size();
         for (const auto& [identity, node] : nodes) {
+            for (const auto& [id, effect] : node.EffectModels) for (const auto& [propertyId, property] : effect->Properties) {
+                for (const auto& modulator : property.Modulators) for (const auto& bus : sourceBuses(modulator)) resolve(bus, identity.first);
+                static_cast<void>(id);
+                static_cast<void>(propertyId);
+            }
             for (const auto& [id, processor] : node.Effects) {
                 const auto sources = controls.find(id);
                 if (sources == controls.end()) continue;

@@ -23,11 +23,14 @@ float PropertyInstance::Evaluate(float base, const AutomationInput& input, doubl
     for (const auto& modulator : modulators) values.push_back(modulator.Evaluate(milliseconds));
     return automation.Evaluate(base, input, values);
 }
-void PropertyInstance::ProcessAudio(const Bank::Guid& modulator, const float* samples, std::size_t count, double milliseconds) {
+ModulationInstance& PropertyInstance::requireModulator(const Bank::Guid& modulator) {
     const auto& ids = automation.GetModel().Modulators;
     const auto found = std::find(ids.begin(), ids.end(), modulator);
     if (found == ids.end()) throw FormatError("Modulator does not belong to property");
-    modulators[static_cast<std::size_t>(found - ids.begin())].ProcessAudio(samples, count, milliseconds);
+    return modulators[static_cast<std::size_t>(found - ids.begin())];
+}
+void PropertyInstance::ProcessAudio(const Bank::Guid& modulator, const float* samples, std::size_t count, double milliseconds) {
+    requireModulator(modulator).ProcessAudio(samples, count, milliseconds);
 }
 void PropertyInstance::Release(double milliseconds) {
     for (auto& modulator : modulators) modulator.Release(milliseconds);
@@ -35,4 +38,8 @@ void PropertyInstance::Release(double milliseconds) {
 bool PropertyInstance::IsFinished(double milliseconds) const {
     return std::all_of(modulators.begin(), modulators.end(), [milliseconds](const auto& modulator) { return modulator.IsFinished(milliseconds); });
 }
+void PropertyInstance::ProcessMeter(const Bank::Guid& modulator, float peak, float energy, double milliseconds) {
+    requireModulator(modulator).ProcessMeter(peak, energy, milliseconds);
+}
+
 }

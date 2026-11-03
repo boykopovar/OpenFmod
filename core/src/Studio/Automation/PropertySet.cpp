@@ -41,9 +41,16 @@ void PropertySet::Release(double milliseconds) {
 bool PropertySet::IsFinished(double milliseconds) const {
     return std::all_of(instances.begin(), instances.end(), [milliseconds](const auto& entry) { return entry.second.IsFinished(milliseconds); });
 }
-void PropertySet::ProcessAudio(std::uint32_t property, const Bank::Guid& modulator, const float* samples, std::size_t count, double milliseconds) {
+PropertyInstance& PropertySet::requireInstance(std::uint32_t property) {
     const auto found = instances.find(property);
     if (found == instances.end()) throw FormatError("Unknown automated property audio input");
-    found->second.ProcessAudio(modulator, samples, count, milliseconds);
+    return found->second;
 }
+void PropertySet::ProcessAudio(std::uint32_t property, const Bank::Guid& modulator, const float* samples, std::size_t count, double milliseconds) {
+    requireInstance(property).ProcessAudio(modulator, samples, count, milliseconds);
+}
+void PropertySet::ProcessMeter(std::uint32_t property, const Bank::Guid& modulator, float peak, float energy, double milliseconds) {
+    requireInstance(property).ProcessMeter(modulator, peak, energy, milliseconds);
+}
+
 }
