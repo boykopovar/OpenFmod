@@ -34,7 +34,7 @@ EventState::EventState(std::shared_ptr<RuntimeContext> context, const Bank::Guid
 }
 AutomationInput EventState::Input() const {
     return {Position, [this](const auto& id) { return Parameters.GetValue(id); }, {},
-        [this](const auto& id) { return controllerBlend(id, automationCursor); }};
+        [this](const auto& id) { return controllerBlend(id, automationCursor); }, ending};
 }
 void EventState::Start(const SoundStart& position) {
     if (!Available) throw FormatError("Event bank has been unloaded");

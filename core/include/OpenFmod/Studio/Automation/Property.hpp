@@ -8,6 +8,7 @@ struct AutomationInput {
     std::function<float(const Bank::Guid&)> Parameters;
     AutomationBlend Blend;
     std::function<AutomationBlend(const Bank::Guid&)> ControllerBlends;
+    bool Stopping{};
 };
 class PropertyAutomation {
 public:

@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include "OpenFmod/Audio/PcmSource.hpp"
 namespace {
-std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, bool programmer = false) {
+std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, bool programmer = false, bool onEnd = false) {
     using namespace TestData;
     std::string settings(80, '\0');
     std::string probability;
@@ -20,7 +20,9 @@ std::string instrument(unsigned char id, bool multi, unsigned mode, bool empty, 
     Append(settings, 24, 2);
     settings.append(24, '\0');
     if (id != 2) settings[86] = 11;
-    settings.append(20, '\0');
+    settings.append(16, '\0');
+    Append(settings, onEnd ? 4 : 0, 4);
+    if (onEnd) Append(settings, 3, 4);
     std::string identity(16, '\0');
     identity[0] = static_cast<char>(id);
     if (programmer) { Append(identity, 4, 2); identity += "tone"; }
@@ -68,7 +70,7 @@ std::string event(unsigned char id, unsigned char source, unsigned maximum, unsi
     AppendFloat(bytes, 0);
     return Chunk("LIST", "EVNT" + Chunk("EVTB", bytes) + Chunk("LIST", "PRPS" + Chunk("LCNT", std::string(4, '\0'))));
 }
-std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, unsigned stealing = 2, float cooldown = 0, unsigned flags = 0x1800) {
+std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, unsigned stealing = 2, float cooldown = 0, unsigned flags = 0x1800, bool onEnd = false) {
     using namespace TestData;
     std::string version;
     Append(version, 142, 4);
@@ -77,7 +79,7 @@ std::string bank(unsigned mode = 0, bool empty = false, unsigned maximum = 4, un
     auto body = std::string("PROJ") + Chunk("BNKI", std::string(16, '\0')) + Chunk("SNDH", {}) + Chunk("STDT", {}) + Chunk("LIST", "WAVS");
     body += Chunk("LIST", "MUIS" + Chunk("LCNT", count) + instrument(1, true, mode, empty));
     body += Chunk("LIST", "SLNS" + Chunk("LCNT", count) + instrument(2, false, mode, empty));
-    body += Chunk("LIST", "PRIS" + Chunk("LCNT", count) + instrument(3, false, mode, empty, true));
+    body += Chunk("LIST", "PRIS" + Chunk("LCNT", count) + instrument(3, false, mode, empty, true, onEnd));
     body += Chunk("LIST", "MBSS" + Chunk("LCNT", count) + Bus(11, 0, "MB"));
     std::string events;
     Append(events, 2, 4);
@@ -230,6 +232,23 @@ void CheckMultiPlayback() {
     sustained->End(false);
     persistent.Render(silence.data(), 1);
     if (sustained->IsPlaying()) throw std::runtime_error("Natural ending retained a persistent event");
+    System outro(1000);
+    outro.LoadBank(bank(0, false, 4, 2, 0, 0x1802, true));
+    unsigned outroStarts = 0;
+    outro.SetProgrammerSoundFactory([&](const auto&) {
+        ++outroStarts;
+        auto pcm = std::make_shared<Audio::PcmData>();
+        pcm->Layout = {1000, 2, 4};
+        pcm->Samples.assign(8, 1);
+        return std::make_unique<Audio::PcmSource>(pcm);
+    });
+    auto outroEvent = outro.CreateInstance(Bank::Guid{5});
+    outroEvent->Start();
+    outro.Render(silence.data(), 10);
+    if (outroStarts) throw std::runtime_error("Stop condition started during normal playback");
+    outroEvent->End(false);
+    outro.Render(silence.data(), 10);
+    if (outroStarts != 1 || outroEvent->IsPlaying()) throw std::runtime_error("Stop condition did not play its ending instrument exactly once");
     for (unsigned mode = 0; mode <= 4; ++mode) {
         Library scopedLibrary;
         scopedLibrary.Load(bank(mode));

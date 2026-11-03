@@ -20,7 +20,7 @@ void EventInstruments::Activate(const TimelineTrigger& key, const Bank::Guid& in
     if (stopping) throw FormatError("Cannot activate a stopped instrument scheduler");
     if (triggers.count(key)) throw FormatError("Instrument trigger is already active");
     Trigger trigger{library.Retain<Instrument>(instrument), tick, offset, false};
-    trigger.Enabled = trigger.Model->Settings.Trigger.Evaluate(input.Parameters, false);
+    trigger.Enabled = trigger.Model->Settings.Trigger.Evaluate(input.Parameters, input.Stopping);
     if (trigger.Enabled) schedule(key, trigger, input, tick);
     triggers.emplace(key, std::move(trigger));
 }
@@ -44,7 +44,7 @@ void EventInstruments::end(const TimelineTrigger& key, bool cutOff, std::uint64_
 void EventInstruments::Update(const AutomationInput& input, std::uint64_t tick) {
     checkTime(tick);
     if (!stopping) for (auto& [key, trigger] : triggers) {
-        const bool enabled = trigger.Model->Settings.Trigger.Evaluate(input.Parameters, false);
+        const bool enabled = trigger.Model->Settings.Trigger.Evaluate(input.Parameters, input.Stopping);
         if (enabled && !trigger.Enabled) schedule(key, trigger, input, tick);
         else if (!enabled && trigger.Enabled) end(key, true, tick);
         trigger.Enabled = enabled;
