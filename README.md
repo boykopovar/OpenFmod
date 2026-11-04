@@ -8,4 +8,4 @@ Not affiliated with or endorsed by Firelight Technologies. No original FMOD sour
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+OpenFmod is licensed under the [MIT License](LICENSE). Third-party dependencies retain their respective licenses.
