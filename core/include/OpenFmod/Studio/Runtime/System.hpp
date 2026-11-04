@@ -15,6 +15,7 @@ public:
     void UnloadBank(const Bank::Guid& bank);
     std::vector<Bank::Guid> GetEvents() const;
     std::vector<Bank::Guid> GetEvents(const Bank::Guid& bank) const;
+    Bank::Guid FindParameter(const std::string& name) const;
     Bank::Guid FindId(const std::string& path) const;
     std::string GetPath(const Bank::Guid& id) const;
     std::shared_ptr<EventInstance> CreateInstance(const Bank::Guid& event);

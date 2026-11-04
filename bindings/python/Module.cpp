@@ -70,6 +70,7 @@ PYBIND11_MODULE(_openfmod, module) {
         .def("UnloadBank", &System::UnloadBank)
         .def("GetEvents", py::overload_cast<>(&System::GetEvents, py::const_))
         .def("GetEvents", py::overload_cast<const Bank::Guid&>(&System::GetEvents, py::const_))
+        .def("FindParameter", &System::FindParameter)
         .def("FindId", &System::FindId)
         .def("GetPath", &System::GetPath)
         .def("CreateInstance", &System::CreateInstance)

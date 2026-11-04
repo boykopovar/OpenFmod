@@ -34,6 +34,7 @@ std::vector<Bank::Guid> System::GetEvents(const Bank::Guid& bank) const {
     for (const auto& [id, event] : project->Events) if (event.Definition.Flags & 1) result.push_back(id);
     return result;
 }
+Bank::Guid System::FindParameter(const std::string& name) const { return context->Globals.FindId(name); }
 Bank::Guid System::FindId(const std::string& path) const { return context->Resources.FindId(path); }
 std::string System::GetPath(const Bank::Guid& id) const { return context->Resources.GetPath(id); }
 std::shared_ptr<EventInstance> System::CreateInstance(const Bank::Guid& event) { return context->Create(event); }
