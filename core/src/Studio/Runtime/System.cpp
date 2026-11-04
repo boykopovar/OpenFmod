@@ -9,6 +9,9 @@ Bank::Guid System::LoadBank(std::string bytes) {
     context->Buses.Refresh();
     return bank;
 }
+void System::PrepareBank(const Bank::Guid& bank) {
+    for (const auto& wave : context->Resources.GetProject(bank)->Sources.Waves) context->Sources.Prepare(wave.first);
+}
 void System::UnloadBank(const Bank::Guid& bank) {
     context->Resources.GetProject(bank);
     for (const auto& entry : context->Events) if (auto instance = entry.lock()) {
@@ -21,7 +24,7 @@ void System::UnloadBank(const Bank::Guid& bank) {
     context->Resources.Unload(bank);
     context->Globals.Refresh(context->Resources);
     context->Buses.Refresh();
-    context->Sources.ClearDecoded();
+    context->Sources.PruneDecoded();
 }
 std::vector<Bank::Guid> System::GetEvents() const {
     std::vector<Bank::Guid> result;

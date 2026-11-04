@@ -12,6 +12,7 @@ public:
     System(const System&) = delete;
     System& operator=(const System&) = delete;
     Bank::Guid LoadBank(std::string bytes);
+    void PrepareBank(const Bank::Guid& bank);
     void UnloadBank(const Bank::Guid& bank);
     std::vector<Bank::Guid> GetEvents() const;
     std::vector<Bank::Guid> GetEvents(const Bank::Guid& bank) const;
