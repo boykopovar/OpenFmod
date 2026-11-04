@@ -112,9 +112,9 @@ find_package(Threads REQUIRED)
 target_link_libraries(OpenFmod PRIVATE vorbis vorbisenc Threads::Threads)
 set_target_properties(OpenFmod PROPERTIES CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
-    target_compile_options(OpenFmod PRIVATE /W4 /permissive- /utf-8)
+    target_compile_options(OpenFmod PRIVATE /W4 /permissive- /utf-8 $<$<CONFIG:Debug>:/O2> $<$<CONFIG:Debug>:/Ob2> $<$<CONFIG:Debug>:/Zo>)
 else()
-    target_compile_options(OpenFmod PRIVATE -Wall -Wextra -Wpedantic -pedantic-errors)
+    target_compile_options(OpenFmod PRIVATE -Wall -Wextra -Wpedantic -pedantic-errors $<$<CONFIG:Debug>:-O2>)
 endif()
 
 
