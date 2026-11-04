@@ -1,3 +1,4 @@
+#include "OpenFmod/Audio/Signal/Precision.hpp"
 #include "OpenFmod/Audio/Dynamics/Compressor.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
 #include <cmath>
@@ -25,8 +26,8 @@ void Compressor::Configure(CompressorSettings value) {
 void Compressor::Reset() { first = {}; second = {}; }
 float Compressor::gain(float energy, std::size_t channel) {
     const float coefficient = energy > second[channel] ? attack : release;
-    first[channel] += (energy - first[channel]) * coefficient;
-    second[channel] += (first[channel] - second[channel]) * coefficient;
+    first[channel] = FlushSubnormal(first[channel] + (energy - first[channel]) * coefficient);
+    second[channel] = FlushSubnormal(second[channel] + (first[channel] - second[channel]) * coefficient);
     return second[channel] > threshold ? makeup * std::pow(second[channel] / threshold, exponent) : makeup;
 }
 void Compressor::Process(float* stereo, std::size_t frames) {

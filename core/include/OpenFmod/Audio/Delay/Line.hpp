@@ -1,6 +1,7 @@
 #ifndef OPENFMOD_AUDIO_DELAY_LINE_HPP
 #define OPENFMOD_AUDIO_DELAY_LINE_HPP
 #include "OpenFmod/Binary/Reader.hpp"
+#include "OpenFmod/Audio/Signal/Precision.hpp"
 #include <algorithm>
 #include <vector>
 namespace OpenFmod::Audio {
@@ -15,7 +16,7 @@ public:
         values.resize(size);
     }
     void Advance() { position = (position - 1) & (values.size() - 1); }
-    void Write(float value) { values[position] = value; }
+    void Write(float value) { values[position] = FlushSubnormal(value); }
     float Read(std::size_t delay) const {
         if (delay >= values.size()) throw FormatError("Audio delay exceeds capacity");
         return values[(position + delay) & (values.size() - 1)];

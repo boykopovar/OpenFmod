@@ -1,6 +1,7 @@
 #include "OpenFmod/Audio/Filters/ThreeBandEq.hpp"
 #include "OpenFmod/Audio/Filters/MultibandEq.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
+#include "OpenFmod/Audio/Signal/Precision.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -17,6 +18,20 @@ std::vector<float> signal() {
 }
 void CheckFilters() {
     using namespace OpenFmod::Audio;
+    const auto normal = std::numeric_limits<float>::min();
+    if (FlushSubnormal(normal) != normal || FlushSubnormal(-normal) != -normal
+        || FlushSubnormal(std::numeric_limits<float>::denorm_min()) != 0) {
+        throw std::runtime_error("Audio precision discarded normal values or retained subnormal values");
+    }
+    Biquad decay;
+    decay.Configure(DesignPassFilter(48000, 1000, 0.7f, false));
+    std::array<float, 2> impulse{1, 1};
+    decay.Process(impulse.data(), 2);
+    for (std::size_t frame = 0; frame < 48000; ++frame) {
+        impulse = {};
+        decay.Process(impulse.data(), 2);
+    }
+    if (impulse != std::array<float, 2>{}) throw std::runtime_error("Filter retained a subnormal tail");
     for (std::size_t channels : {1u, 4u, 6u, 8u}) {
         ThreeBandSettings settings;
         settings.GainDecibels = {-4, 2, -8};

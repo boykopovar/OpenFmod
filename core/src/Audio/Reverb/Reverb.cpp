@@ -1,3 +1,4 @@
+#include "OpenFmod/Audio/Signal/Precision.hpp"
 #include "OpenFmod/Audio/Reverb/Reverb.hpp"
 #include <cmath>
 #include <limits>
@@ -43,7 +44,7 @@ void Reverb::Reset() {
 float Reverb::filterInput(float input, float fraction) {
     const auto lowpass = blend(previous.lowpass, parameters.lowpass, fraction);
     for (auto& state : lowpassState) {
-        state = input * lowpass + (1 - lowpass) * state;
+        state = FlushSubnormal(input * lowpass + (1 - lowpass) * state);
         input = state;
     }
     if (settings.LowShelfDecibels != 0) input = shelf.Process({input, input})[0];
@@ -74,7 +75,7 @@ std::array<float, 8> Reverb::reverberate(float input, float fraction, std::size_
             line.Read(parameters.feedbackDelays[index] - 1) * parameters.feedbackGains[index], fraction);
         const auto value = (returned + tap(predelay, previous.inputDelays[index + 1], parameters.inputDelays[index + 1], fraction) * lateGain) * normalization;
         const auto damping = blend(previous.damping[index], parameters.damping[index], fraction);
-        filtered[index] = value * damping + (1 - damping) * filtered[index];
+        filtered[index] = FlushSubnormal(value * damping + (1 - damping) * filtered[index]);
         mixed[index] = filtered[index];
     }
     for (std::size_t stride = 1; stride < mixed.size(); stride *= 2) {

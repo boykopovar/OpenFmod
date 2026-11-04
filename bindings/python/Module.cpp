@@ -12,7 +12,10 @@ py::bytes render(OpenFmod::Studio::System& system, std::size_t frames) {
         throw OpenFmod::FormatError("PCM output size overflow");
     }
     std::vector<float> samples(frames * 2);
-    system.Render(samples.data(), frames);
+    {
+        py::gil_scoped_release release;
+        system.Render(samples.data(), frames);
+    }
     return py::bytes(reinterpret_cast<const char*>(samples.data()), samples.size() * sizeof(float));
 }
 void renderInto(OpenFmod::Studio::System& system, const py::buffer& output) {
@@ -21,6 +24,7 @@ void renderInto(OpenFmod::Studio::System& system, const py::buffer& output) {
         || buffer.strides[0] != sizeof(float) || buffer.size % 2 || reinterpret_cast<std::uintptr_t>(buffer.ptr) % alignof(float)) {
         throw OpenFmod::FormatError("PCM output requires a contiguous writable float32 stereo buffer");
     }
+    py::gil_scoped_release release;
     system.Render(static_cast<float*>(buffer.ptr), static_cast<std::size_t>(buffer.size) / 2);
 }
 }

@@ -1,3 +1,4 @@
+#include "OpenFmod/Audio/Signal/Precision.hpp"
 #include "OpenFmod/Audio/Filters/Biquad.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
 #include <algorithm>
@@ -52,7 +53,7 @@ void Biquad::Process(float* input, std::size_t channels) {
         const float current = input[channel] - state[0] * coefficients[3] - state[1] * coefficients[4];
         input[channel] = current * coefficients[0] + state[0] * coefficients[1] + state[1] * coefficients[2];
         state[1] = state[0];
-        state[0] = current;
+        state[0] = FlushSubnormal(current);
     }
 }
 }
