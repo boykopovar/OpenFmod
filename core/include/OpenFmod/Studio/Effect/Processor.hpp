@@ -3,6 +3,8 @@
 #include "OpenFmod/Studio/Effect/Configuration.hpp"
 #include "OpenFmod/Audio/Dynamics/SignalTap.hpp"
 #include <memory>
+#include <optional>
+#include "OpenFmod/Audio/Spatial/MixMatrix.hpp"
 #include "OpenFmod/Audio/Processing/IAudioTransform.hpp"
 namespace OpenFmod::Studio {
 class EffectProcessor final : public Audio::IAudioProcessor, public Audio::IAudioTransform {
@@ -21,6 +23,8 @@ private:
     static Unit create(const Effect& effect, std::uint32_t sampleRate);
     std::vector<EffectParameter> parameters;
     Unit unit;
+    std::optional<Audio::MixMatrix> downmix;
+    Audio::SpeakerMode downmixLayout{Audio::SpeakerMode::Stereo};
     bool bypassed{};
     bool sidechainEnabled{};
     std::vector<std::shared_ptr<Audio::SignalTap>> sidechains;

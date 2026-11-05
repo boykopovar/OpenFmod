@@ -17,11 +17,15 @@ void EffectProcessor::Process(const float* input, float* output, std::size_t fra
         return;
     }
     if (std::holds_alternative<Audio::Panner>(unit)) {
-        if (inputLayout != Audio::SpeakerMode::Stereo && PannerConfiguration(parameters).Mode != 1) {
+        if (inputLayout != Audio::SpeakerMode::Stereo && std::get<std::int32_t>(parameters[0]) != 1) {
             throw FormatError("Spatial panning requires a stereo input layout");
         }
         std::fill_n(output, frames * 2, 0);
-        Audio::MixMatrix(inputLayout, Audio::SpeakerMode::Stereo).Add(input, output, frames);
+        if (!downmix || downmixLayout != inputLayout) {
+            downmix.emplace(inputLayout, Audio::SpeakerMode::Stereo);
+            downmixLayout = inputLayout;
+        }
+        downmix->Add(input, output, frames);
         Process(output, frames);
         return;
     }

@@ -179,7 +179,11 @@ void Graph::Render(float* stereo, std::size_t frames) {
             node.routing->Add(node.buffer.data(), parent.buffer.data(), frames);
         } else if (layout != SpeakerMode::Stereo) {
             node.scratch.assign(frames * 2, 0);
-            MixMatrix(layout, SpeakerMode::Stereo).Add(node.buffer.data(), node.scratch.data(), frames);
+            if (!node.routing || node.routedLayout != layout) {
+                node.routing.emplace(layout, SpeakerMode::Stereo);
+                node.routedLayout = layout;
+            }
+            node.routing->Add(node.buffer.data(), node.scratch.data(), frames);
             node.buffer.swap(node.scratch);
         }
     }

@@ -40,6 +40,19 @@ void CheckEffect() {
     try { tap->GetSamples(2); }
     catch (const OpenFmod::FormatError&) { rejected = true; }
     if (!rejected) throw std::runtime_error("Mismatched sidechain block accepted");
+    OpenFmod::Studio::Effect panner;
+    panner.Type = 27;
+    panner.Parameters = {std::int32_t{1}, 0.0f, 0.0f, 360.0f, 0.0f, 0.0f, std::int32_t{1}, 60.0f, 0.0f, std::int32_t{4095}, std::string{}, std::int32_t{0}, 1.0f, 20.0f, std::int32_t{0}, 0.0f, 0.0f, 0.0f, std::int32_t{0}, std::string{}, std::int32_t{2}, 0.0f, std::string{}, false};
+    OpenFmod::Studio::EffectProcessor cachedPanner(panner, 48000);
+    const std::array<float, 8> surround{0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f};
+    for (const auto layout : {OpenFmod::Audio::SpeakerMode::Surround51, OpenFmod::Audio::SpeakerMode::Surround51, OpenFmod::Audio::SpeakerMode::Mono, OpenFmod::Audio::SpeakerMode::Surround71, OpenFmod::Audio::SpeakerMode::Stereo}) {
+        OpenFmod::Studio::EffectProcessor freshPanner(panner, 48000);
+        std::array<float, 2> expected{};
+        std::array<float, 2> actual{};
+        freshPanner.Process(surround.data(), expected.data(), 1, layout);
+        cachedPanner.Process(surround.data(), actual.data(), 1, layout);
+        if (actual != expected) throw std::runtime_error("Cached panner changed channel conversion");
+    }
     std::string bytes(16, '\0');
     Append(bytes, 18, 4);
     Append(bytes, 0, 1);
