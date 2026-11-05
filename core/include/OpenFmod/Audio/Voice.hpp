@@ -52,6 +52,7 @@ private:
     std::uint32_t fadePosition{};
     std::uint64_t endFrame{};
     std::array<float, 4096> buffer{};
+    std::array<float, 4096> converted{};
     std::uint64_t bufferBegin{};
     std::size_t buffered{};
     std::array<CachedFrame, 2> recent{};

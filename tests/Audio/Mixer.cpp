@@ -66,6 +66,43 @@ void CheckMixer() {
         }
     }
     using namespace OpenFmod::Audio;
+    {
+        auto data = std::make_shared<PcmData>();
+        data->Layout = {48000, 1, 1031};
+        for (std::size_t i = 0; i < 1031; ++i) data->Samples.push_back(std::sin(static_cast<float>(i)));
+        VoiceSettings settings;
+        settings.StartFrame = 503;
+        settings.LoopBegin = 510;
+        settings.LoopEnd = 520;
+        settings.Repeats = 2;
+        settings.Pitch = 0.75f;
+        Voice voice(std::make_unique<PcmSource>(data), settings, 48000);
+        std::vector<float> output(1600);
+        voice.Mix(output.data(), 800, 1);
+        MixMatrix matrix(SpeakerMode::Mono, SpeakerMode::Stereo);
+        double position = settings.StartFrame;
+        auto repeats = settings.Repeats;
+        for (std::size_t i = 0; i < 800; ++i) {
+            if (repeats && position >= settings.LoopEnd) { position -= settings.LoopEnd - settings.LoopBegin; --repeats; }
+            if (position >= data->Layout.Frames) {
+                if (output[i * 2] != 0 || output[i * 2 + 1] != 0) throw std::runtime_error("Voice continued beyond the sample boundary");
+                continue;
+            }
+            const auto frame = static_cast<std::size_t>(position);
+            auto next = frame + 1;
+            if (repeats && next == settings.LoopEnd) next = settings.LoopBegin;
+            else if (next == data->Layout.Frames) next = frame;
+            std::array<float, 2> first{}, second{};
+            matrix.Add(data->Samples.data() + frame, first.data(), 1);
+            matrix.Add(data->Samples.data() + next, second.data(), 1);
+            const auto fraction = static_cast<float>(position - frame);
+            for (std::size_t channel = 0; channel < 2; ++channel) {
+                const auto expected = first[channel] + (second[channel] - first[channel]) * fraction;
+                if (output[i * 2 + channel] != expected) throw std::runtime_error("Buffered channel conversion changed interpolated loop samples");
+            }
+            position += settings.Pitch;
+        }
+    }
     OpenFmod::Sound::Sample looped;
     looped.Rate = 48000;
     looped.Frames = 8;

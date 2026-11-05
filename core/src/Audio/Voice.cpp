@@ -93,14 +93,16 @@ std::array<float, 8> Voice::readFrame(std::uint64_t frame) {
         for (std::size_t index = 0; index < buffered * format.Channels; ++index) {
             if (!std::isfinite(buffer[index])) throw FormatError("Nonfinite source sample");
         }
+        std::fill_n(converted.data(), buffered * outputChannels, 0.0f);
+        matrix->Add(buffer.data(), converted.data(), buffered);
     }
-    const auto offset = static_cast<std::size_t>(frame - bufferBegin) * format.Channels;
+    const auto offset = static_cast<std::size_t>(frame - bufferBegin) * outputChannels;
     auto& cached = recent[recentIndex];
     recentIndex = (recentIndex + 1) % recent.size();
     cached.Position = frame;
     cached.Valid = true;
     cached.Value.fill(0);
-    matrix->Add(buffer.data() + offset, cached.Value.data(), 1);
+    std::copy_n(converted.data() + offset, outputChannels, cached.Value.data());
     return cached.Value;
 }
 VoiceProgress Voice::Mix(float* stereo, std::size_t frames, float masterGain, float masterPitch) {
