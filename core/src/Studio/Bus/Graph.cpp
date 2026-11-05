@@ -14,21 +14,24 @@ BusGraph::Key BusGraph::key(const Bank::Guid& bus, std::uint64_t scope) const {
     return key(bus, found->second.Parent);
 }
 MixControls BusGraph::baseLevels(const Bus& bus, const std::optional<MixControls>& animated) const {
-    auto levels = animated.value_or(bus.Levels);
+    const auto& initial = animated ? *animated : bus.Levels;
+    MixControls levels{initial.VolumeDecibels, initial.PitchSemitones, {}};
     snapshots.ValidateTarget(bus.Id, [](auto property) { return property <= 1; });
     levels.VolumeDecibels = snapshotProperty(bus.Id, 0, levels.VolumeDecibels, bus.Properties, AutomationType::Volume);
     levels.PitchSemitones = snapshotProperty(bus.Id, 1, levels.PitchSemitones, bus.Properties, AutomationType::Normal);
-    std::set<Bank::Guid> visiting;
-    std::function<void(const Bank::Guid&)> apply = [&](const Bank::Guid& id) {
-        if (!visiting.insert(id).second) throw FormatError("Cyclic volume control routing");
+    struct Visit { const Bank::Guid& Id; const Visit* Parent; };
+    const auto apply = [&](const auto& self, const Bank::Guid& id, const Visit* parent) -> void {
+        for (auto previous = parent; previous; previous = previous->Parent) {
+            if (previous->Id == id) throw FormatError("Cyclic volume control routing");
+        }
+        const Visit visit{id, parent};
         const auto& control = library.Require<VolumeControl>(id);
         snapshots.ValidateTarget(id, [](auto property) { return property <= 1; });
         levels.VolumeDecibels += snapshotProperty(id, 0, control.Levels.VolumeDecibels, control.Properties, AutomationType::Volume);
         levels.PitchSemitones += snapshotProperty(id, 1, control.Levels.PitchSemitones, control.Properties, AutomationType::Normal);
-        for (const auto& parent : control.Levels.VolumeControls) apply(parent);
-        visiting.erase(id);
+        for (const auto& ancestor : control.Levels.VolumeControls) self(self, ancestor, &visit);
     };
-    for (const auto& control : bus.Levels.VolumeControls) apply(control);
+    for (const auto& control : bus.Levels.VolumeControls) apply(apply, control, nullptr);
     return levels;
 }
 std::uint64_t BusGraph::resolve(const Bank::Guid& bus, std::uint64_t scope) {
