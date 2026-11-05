@@ -13,6 +13,15 @@ void CheckDynamics() {
     meter.Process(measured.data(), copied.data(), 2, SpeakerMode::Quad);
     const auto level = meter.GetMeter();
     if (copied != measured || level.Peak != 0.5f || level.Energy != 0.3125f) throw std::runtime_error("Sidechain meter downmixed or averaged its source channels");
+    for (const auto layout : {SpeakerMode::Quad, SpeakerMode::Quad, SpeakerMode::Mono, SpeakerMode::Surround71, SpeakerMode::Stereo}) {
+        SignalTap fresh;
+        fresh.SetGain(0.5f);
+        std::array<float, 8> expectedOutput{};
+        std::array<float, 8> actualOutput{};
+        fresh.Process(measured.data(), expectedOutput.data(), 1, layout);
+        meter.Process(measured.data(), actualOutput.data(), 1, layout);
+        if (actualOutput != expectedOutput || meter.GetSamples(1) != fresh.GetSamples(1) || meter.GetMeter().Energy != fresh.GetMeter().Energy) throw std::runtime_error("Cached sidechain conversion changed samples or metering");
+    }
     CompressorSettings settings;
     settings.ThresholdDecibels = -20;
     settings.Ratio = 2;

@@ -24,13 +24,16 @@ SpeakerMode SignalTap::GetOutputLayout(SpeakerMode input) const {
     return input;
 }
 void SignalTap::Process(const float* input, float* output, std::size_t frames, SpeakerMode inputLayout) {
-    const MixMatrix conversion(inputLayout, SpeakerMode::Stereo);
+    if (!conversion || conversionLayout != inputLayout) {
+        conversion.emplace(inputLayout, SpeakerMode::Stereo);
+        conversionLayout = inputLayout;
+    }
     if (frames > std::numeric_limits<std::size_t>::max() / 8 || (frames && (!input || !output))) throw FormatError("Invalid sidechain channel buffer");
-    measure(input, frames, conversion.GetInputChannels());
+    measure(input, frames, conversion->GetInputChannels());
     samples.assign(frames * 2, 0);
-    conversion.Add(input, samples.data(), frames, gain);
+    conversion->Add(input, samples.data(), frames, gain);
     for (const auto value : samples) if (!std::isfinite(value)) throw FormatError("Nonfinite sidechain signal");
-    if (frames) std::copy_n(input, frames * conversion.GetInputChannels(), output);
+    if (frames) std::copy_n(input, frames * conversion->GetInputChannels(), output);
     initialized = true;
 }
 void SignalTap::measure(const float* input, std::size_t frames, std::size_t channels) {

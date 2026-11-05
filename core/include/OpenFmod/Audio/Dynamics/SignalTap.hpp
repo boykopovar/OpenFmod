@@ -2,6 +2,8 @@
 #define OPENFMOD_AUDIO_DYNAMICS_SIGNALTAP_HPP
 #include "OpenFmod/Audio/Processing/IAudioProcessor.hpp"
 #include <vector>
+#include <optional>
+#include "OpenFmod/Audio/Spatial/MixMatrix.hpp"
 #include "OpenFmod/Audio/Processing/IAudioTransform.hpp"
 namespace OpenFmod::Audio {
 struct SignalMeter {
@@ -19,6 +21,8 @@ public:
 private:
     void measure(const float* input, std::size_t frames, std::size_t channels);
     SignalMeter meter;
+    std::optional<MixMatrix> conversion;
+    SpeakerMode conversionLayout{SpeakerMode::Stereo};
     float gain{1};
     std::vector<float> samples;
     bool initialized{};
