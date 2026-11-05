@@ -13,9 +13,13 @@ std::shared_ptr<const Audio::PcmData> SourceLibrary::prepareDecoded(const Bank::
     }
     return found->second.Pcm;
 }
-void SourceLibrary::Prepare(const Bank::Guid& wave) {
+void SourceLibrary::Prepare(const Bank::Guid& wave, bool decodeCompressed) {
     auto sample = library.Retain<Sound::Sample>(wave);
     const auto mode = library.GetOwner<Sound::Sample>(wave)->Sources.Waves.at(wave).Mode;
+    if (decodeCompressed && mode == Bank::LoadingMode::Compressed) {
+        prepareDecoded(wave, std::move(sample));
+        return;
+    }
     switch (mode) {
         case Bank::LoadingMode::Decoded:
             prepareDecoded(wave, std::move(sample));
@@ -32,6 +36,7 @@ std::unique_ptr<Audio::IAudioSource> SourceLibrary::Create(const Bank::Guid& wav
     auto sample = library.Retain<Sound::Sample>(wave);
     const auto owner = library.GetOwner<Sound::Sample>(wave);
     const auto mode = owner->Sources.Waves.at(wave).Mode;
+    if (const auto found = decoded.find(wave); found != decoded.end()) return std::make_unique<Audio::PcmSource>(found->second.Pcm);
     switch (mode) {
         case Bank::LoadingMode::Compressed:
         case Bank::LoadingMode::Streaming:

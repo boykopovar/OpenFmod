@@ -7,7 +7,7 @@ namespace OpenFmod::Studio {
 class SourceLibrary {
 public:
     explicit SourceLibrary(const Library& library);
-    void Prepare(const Bank::Guid& wave);
+    void Prepare(const Bank::Guid& wave, bool decodeCompressed = false);
     std::unique_ptr<Audio::IAudioSource> Create(const Bank::Guid& wave);
     void PruneDecoded();
 private:

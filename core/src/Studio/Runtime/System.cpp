@@ -9,8 +9,8 @@ Bank::Guid System::LoadBank(std::string bytes) {
     context->Buses.Refresh();
     return bank;
 }
-void System::PrepareBank(const Bank::Guid& bank) {
-    for (const auto& wave : context->Resources.GetProject(bank)->Sources.Waves) context->Sources.Prepare(wave.first);
+void System::PrepareBank(const Bank::Guid& bank, bool decodeCompressed) {
+    for (const auto& wave : context->Resources.GetProject(bank)->Sources.Waves) context->Sources.Prepare(wave.first, decodeCompressed);
 }
 void System::UnloadBank(const Bank::Guid& bank) {
     context->Resources.GetProject(bank);

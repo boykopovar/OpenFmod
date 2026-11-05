@@ -68,7 +68,7 @@ PYBIND11_MODULE(_openfmod, module) {
         .def(py::init<std::uint32_t, std::uint32_t>(), py::arg("sample_rate") = 48000, py::arg("seed") = 0)
         .def("LoadBank", [](System& system, const py::bytes& bytes) { return system.LoadBank(static_cast<std::string>(bytes)); })
         .def("UnloadBank", &System::UnloadBank)
-        .def("PrepareBank", &System::PrepareBank, py::call_guard<py::gil_scoped_release>())
+        .def("PrepareBank", &System::PrepareBank, py::arg("bank"), py::arg("decodeCompressed") = false, py::call_guard<py::gil_scoped_release>())
         .def("GetEvents", py::overload_cast<>(&System::GetEvents, py::const_))
         .def("GetEvents", py::overload_cast<const Bank::Guid&>(&System::GetEvents, py::const_))
         .def("FindParameter", &System::FindParameter)
