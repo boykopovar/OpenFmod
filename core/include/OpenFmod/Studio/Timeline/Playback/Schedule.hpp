@@ -26,7 +26,8 @@ private:
     void schedule(const TimelineSpan& span, const TimelineCursor& cursor, const std::vector<ScheduledInstrument>& entries, bool timeLocked, std::vector<TimelineAction>& actions);
     const TimelineResource& model;
     std::map<TimelineTrigger, TimelineAction> active;
-    std::map<std::uint64_t, std::uint32_t> positions;
+    std::array<std::pair<std::uint64_t, std::uint32_t>, TimelineSpan{}.Cursors.size()> positions{};
+    std::size_t positionCount{};
 };
 }
 #endif

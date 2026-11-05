@@ -51,7 +51,7 @@ InstrumentFrame EventState::instrumentFrame(const TimelineTrigger& trigger, cons
     if (found == cursors.end()) throw FormatError("Instrument timeline cursor is missing");
     const auto& cursor = found->second;
     frame.Input.Tick = cursor.Position;
-    frame.Input.ControllerBlends = [this, cursor](const auto& id) { return controllerBlend(id, cursor); };
+    frame.Input.ControllerBlends = [this, cursor = &cursor](const auto& id) { return controllerBlend(id, *cursor); };
     if (!cursor.Sequence || (cursor.Role != TimelineRole::Source && cursor.Role != TimelineRole::Destination)) return frame;
     const auto& fades = cursor.Role == TimelineRole::Source ? cursor.Sequence->SourceFades : cursor.Sequence->DestinationFades;
     for (const auto& fade : fades) if (fade.Target == instrument) {

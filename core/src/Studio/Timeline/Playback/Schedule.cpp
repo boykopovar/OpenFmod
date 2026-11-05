@@ -1,7 +1,6 @@
 #include "OpenFmod/Studio/Timeline/Playback/Schedule.hpp"
 #include "OpenFmod/Studio/Timeline/Playback/Bounds.hpp"
 #include <algorithm>
-#include <set>
 #include <tuple>
 namespace OpenFmod::Studio {
 bool TimelineTrigger::operator<(const TimelineTrigger& other) const {
@@ -10,7 +9,7 @@ bool TimelineTrigger::operator<(const TimelineTrigger& other) const {
 TimelineSchedule::TimelineSchedule(const TimelineResource& model) : model(model) {}
 void TimelineSchedule::schedule(const TimelineSpan& span, const TimelineCursor& cursor, const std::vector<ScheduledInstrument>& entries, bool timeLocked, std::vector<TimelineAction>& actions) {
     const auto end = cursor.Advancing ? TimelineEnd(cursor.Position, span.Duration) : cursor.Position;
-    const bool entering = positions.count(cursor.Generation) == 0;
+    const bool entering = std::none_of(positions.begin(), positions.begin() + positionCount, [&](const auto& entry) { return entry.first == cursor.Generation; });
     for (std::size_t index = 0; index < entries.size(); ++index) {
         const auto& entry = entries[index];
         const auto finish = TimelineEnd(entry.Start, entry.Duration);
@@ -38,17 +37,19 @@ void TimelineSchedule::schedule(const TimelineSpan& span, const TimelineCursor& 
 }
 std::vector<TimelineAction> TimelineSchedule::Process(const TimelineSpan& span) {
     if (!span.Duration || !span.Count || span.Count > span.Cursors.size()) throw FormatError("Invalid timeline schedule span");
-    std::set<std::uint64_t> generations;
+    const auto containsGeneration = [&](std::uint64_t generation) {
+        return std::any_of(span.Cursors.begin(), span.Cursors.begin() + span.Count, [&](const auto& cursor) { return cursor.Generation == generation; });
+    };
     for (std::size_t i = 0; i < span.Count; ++i) {
         const auto& cursor = span.Cursors[i];
-        if (!cursor.Generation || !generations.insert(cursor.Generation).second) throw FormatError("Duplicate timeline cursor generation");
-        const auto found = positions.find(cursor.Generation);
-        if (found != positions.end() && found->second != cursor.Position) throw FormatError("Discontinuous timeline cursor generation");
+        if (!cursor.Generation || std::any_of(span.Cursors.begin(), span.Cursors.begin() + i, [&](const auto& previous) { return previous.Generation == cursor.Generation; })) throw FormatError("Duplicate timeline cursor generation");
+        const auto found = std::find_if(positions.begin(), positions.begin() + positionCount, [&](const auto& previous) { return previous.first == cursor.Generation; });
+        if (found != positions.begin() + positionCount && found->second != cursor.Position) throw FormatError("Discontinuous timeline cursor generation");
         if (cursor.Role == TimelineRole::Transition && !span.Sequence) throw FormatError("Transition cursor has no sequence");
     }
     std::vector<TimelineAction> actions;
     for (auto it = active.begin(); it != active.end();) {
-        if (!generations.count(it->first.Generation)) {
+        if (!containsGeneration(it->first.Generation)) {
             auto action = it->second;
             action.Activate = false;
             action.Delay = 0;
@@ -63,10 +64,10 @@ std::vector<TimelineAction> TimelineSchedule::Process(const TimelineSpan& span) 
         schedule(span, cursor, triggered, false, actions);
         schedule(span, cursor, locked, true, actions);
     }
-    positions.clear();
+    positionCount = span.Count;
     for (std::size_t i = 0; i < span.Count; ++i) {
         const auto& cursor = span.Cursors[i];
-        positions.emplace(cursor.Generation, cursor.Advancing ? TimelineEnd(cursor.Position, span.Duration) : cursor.Position);
+        positions[i] = {cursor.Generation, cursor.Advancing ? TimelineEnd(cursor.Position, span.Duration) : cursor.Position};
     }
     std::stable_sort(actions.begin(), actions.end(), [](const auto& left, const auto& right) { return left.Delay < right.Delay; });
     return actions;
@@ -82,7 +83,7 @@ std::vector<TimelineAction> TimelineSchedule::Clear() {
         static_cast<void>(key);
     }
     active.clear();
-    positions.clear();
+    positionCount = 0;
     return result;
 }
 }
