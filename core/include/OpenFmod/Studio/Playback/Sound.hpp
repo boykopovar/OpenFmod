@@ -27,6 +27,8 @@ private:
     std::uint32_t sampleRate;
     ProgrammerSoundFactory programmer;
     std::optional<std::uint64_t> voice;
+    float gain{};
+    float pitch{};
     bool started{};
     bool releasing{};
 };

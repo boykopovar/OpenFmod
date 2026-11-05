@@ -48,6 +48,8 @@ void SoundPlayback::Start(const SoundStart& start, const AutomationInput& input)
     settings.Gain = properties.GetGain();
     settings.Pitch = properties.GetPitch(input);
     voice = mixer.Play(std::move(source), settings);
+    gain = settings.Gain;
+    pitch = settings.Pitch;
     started = true;
 }
 void SoundPlayback::Update(const AutomationInput& input, double milliseconds, float parentGain, float parentPitch) {
@@ -60,8 +62,10 @@ void SoundPlayback::Update(const AutomationInput& input, double milliseconds, fl
         mixer.Stop(*voice);
         return;
     }
-    mixer.SetVoiceGain(*voice, parentGain * properties.GetGain());
-    mixer.SetVoicePitch(*voice, parentPitch * properties.GetPitch(input));
+    const auto nextGain = parentGain * properties.GetGain();
+    const auto nextPitch = parentPitch * properties.GetPitch(input);
+    if (nextGain != gain) { mixer.SetVoiceGain(*voice, nextGain); gain = nextGain; }
+    if (nextPitch != pitch) { mixer.SetVoicePitch(*voice, nextPitch); pitch = nextPitch; }
 }
 void SoundPlayback::Stop(bool immediate, double milliseconds) {
     if (!started) throw FormatError("Sound playback has not started");

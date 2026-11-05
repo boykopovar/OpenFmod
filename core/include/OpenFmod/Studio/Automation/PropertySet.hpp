@@ -17,6 +17,7 @@ private:
     std::map<std::uint32_t, float> base;
     std::map<std::uint32_t, float> values;
     std::map<std::uint32_t, PropertyInstance> instances;
+    bool baseChanged{};
 };
 }
 #endif

@@ -14,9 +14,12 @@ PropertySet::PropertySet(const Library& library, std::map<std::uint32_t, float> 
     }
 }
 void PropertySet::Update(const AutomationInput& input, double milliseconds) {
-    for (const auto& [id, value] : base) {
-        const auto instance = instances.find(id);
-        const auto result = instance == instances.end() ? value : instance->second.Evaluate(value, input, milliseconds);
+    if (baseChanged) {
+        for (const auto& [id, value] : base) if (!instances.count(id)) values.at(id) = value;
+        baseChanged = false;
+    }
+    for (auto& [id, instance] : instances) {
+        const auto result = instance.Evaluate(base.at(id), input, milliseconds);
         if (!std::isfinite(result)) throw FormatError("Nonfinite automated property");
         values.at(id) = result;
     }
@@ -30,6 +33,7 @@ void PropertySet::SetBase(std::uint32_t id, float value) {
     if (!std::isfinite(value)) throw FormatError("Nonfinite base property");
     const auto found = base.find(id);
     if (found == base.end()) throw FormatError("Unknown playback property");
+    baseChanged = baseChanged || found->second != value;
     found->second = value;
 }
 void PropertySet::Release(double milliseconds) {

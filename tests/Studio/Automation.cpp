@@ -1,10 +1,20 @@
 #include "OpenFmod/Studio/Automation/Controller.hpp"
+#include "OpenFmod/Studio/Automation/PropertySet.hpp"
 #include "OpenFmod/Studio/Automation/Resolver.hpp"
 #include "../Data/Writer.hpp"
 #include <stdexcept>
 #include <limits>
 void CheckAutomation() {
     using namespace OpenFmod::Studio;
+    Library library;
+    AutomationBindings bindings(library, {});
+    PropertySet properties(library, {{0, 1}, {1, 2}}, {}, bindings, {});
+    properties.Update({}, 0);
+    properties.SetBase(0, 3);
+    if (properties.Get(0) != 1) throw std::runtime_error("Base property changed before update");
+    properties.Update({}, 1);
+    properties.Update({}, 2);
+    if (properties.Get(0) != 3 || properties.Get(1) != 2) throw std::runtime_error("Static property update was lost");
     AutomationResolver average(Resolution::Average, AutomationType::Normal);
     if (average.Resolve(10, {}) != 10 || average.Resolve(0, {{4, 1}, {8, 1}}) != 6
         || average.Resolve(0, {{4, 1}, {8, 0.5f}}) != 5) throw std::runtime_error("Incorrect averaged automation");
