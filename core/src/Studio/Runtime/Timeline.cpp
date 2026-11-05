@@ -4,11 +4,11 @@ void EventState::Prepare(std::uint32_t ticks) {
     if (!Transport || !ticks || State == PlaybackState::Stopped || State == PlaybackState::Stopping) return;
     const auto begin = Context->Clock.GetTick();
     spans.clear();
-    std::uint64_t elapsed = 0;
-    Transport->Advance(ticks, Input().Parameters, [this] { return Context->Random(); }, [&](const auto& span) {
-        spans.push_back({begin + elapsed, span});
-        for (auto action : Schedule->Process(span)) actions.push_back({begin + elapsed + action.Delay, std::move(action)});
-        elapsed += span.Duration;
+    auto tick = begin;
+    Transport->Advance(ticks, Input().Parameters, [this] { return Context->Random(); }, [this, &tick](const auto& span) {
+        spans.push_back({tick, span});
+        for (auto action : Schedule->Process(span)) actions.push_back({tick + action.Delay, std::move(action)});
+        tick += span.Duration;
     });
     plannedPosition = Transport->GetPosition();
     plannedUntil = begin + ticks;
