@@ -1,4 +1,5 @@
 #include "OpenFmod/Sound/Vorbis/Setup.hpp"
+#include "OpenFmod/Sound/Vorbis/DecoderSetup.hpp"
 #include "OpenFmod/Sound/Vorbis/State.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
 #include "OpenFmod/Binary/Checksum.hpp"
@@ -46,4 +47,13 @@ std::shared_ptr<const Headers> SetupRegistry::Resolve(std::uint32_t rate, std::u
     }
     throw FormatError("Unknown Vorbis setup checksum: " + std::to_string(expected));
 }
+std::shared_ptr<const DecoderSetup> SetupRegistry::Prepare(std::uint32_t rate, std::uint32_t channels, std::uint32_t checksum) {
+    const auto packets = Resolve(rate, channels, checksum);
+    const std::array<std::uint32_t, 3> key{rate, channels, checksum};
+    const std::lock_guard lock(mutex);
+    const auto found = decoders.find(key);
+    if (found != decoders.end()) return found->second;
+    return decoders.emplace(key, std::make_shared<DecoderSetup>(*packets)).first->second;
+}
+
 }

@@ -1,5 +1,5 @@
 #include "OpenFmod/Sound/Vorbis/Decoder.hpp"
-#include "OpenFmod/Sound/Vorbis/State.hpp"
+#include "OpenFmod/Sound/Vorbis/DecoderSetup.hpp"
 #include "OpenFmod/Binary/Reader.hpp"
 #include <algorithm>
 #include <cmath>
@@ -9,19 +9,10 @@ class Decoder::Stream {
 public:
     Stream(const Sample& sample, SetupRegistry& registry) : reader(sample.Data), channels(sample.Channels), frames(sample.Frames) {
         if (!sample.VorbisSetup) throw FormatError("Missing Vorbis setup checksum");
-        const auto headers = registry.Resolve(sample.Rate, channels, *sample.VorbisSetup);
         if (frames > std::numeric_limits<std::size_t>::max() / channels) throw FormatError("Decoded sample is too large");
-        packet.b_o_s = 1;
-        for (const auto& bytes : headers->Packets) {
-            packet.packet = const_cast<unsigned char*>(bytes.data());
-            packet.bytes = static_cast<long>(bytes.size());
-            if (vorbis_synthesis_headerin(&decoder.Info, &decoder.Comment, &packet)) throw FormatError("Invalid Vorbis header");
-            packet.b_o_s = 0;
-            ++packet.packetno;
-        }
-        if (vorbis_synthesis_init(&decoder.Dsp, &decoder.Info) || vorbis_block_init(&decoder.Dsp, &decoder.Block)) {
-            throw FormatError("Cannot initialize Vorbis decoder");
-        }
+        setup = registry.Prepare(sample.Rate, channels, *sample.VorbisSetup);
+        setup->Initialize(decoder);
+        packet.packetno = 3;
         packet.granulepos = -1;
     }
     std::size_t Read(float* output, std::size_t requested) {
@@ -63,6 +54,7 @@ private:
         }
         ++packet.packetno;
     }
+    std::shared_ptr<const DecoderSetup> setup;
     State decoder;
     Binary::Reader reader;
     ogg_packet packet{};

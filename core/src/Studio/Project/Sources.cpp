@@ -23,7 +23,7 @@ void SourceLibrary::Prepare(const Bank::Guid& wave) {
         case Bank::LoadingMode::Compressed:
         case Bank::LoadingMode::Streaming:
             if (!sample->VorbisSetup) throw FormatError("Missing Vorbis setup checksum");
-            registry->Resolve(sample->Rate, sample->Channels, *sample->VorbisSetup);
+            registry->Prepare(sample->Rate, sample->Channels, *sample->VorbisSetup);
             return;
     }
     throw FormatError("Invalid sound loading mode");

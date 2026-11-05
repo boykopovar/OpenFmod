@@ -5,6 +5,7 @@
 #include "OpenFmod/Audio/PcmSource.hpp"
 #include <vorbis/vorbisenc.h>
 #include <cmath>
+#include <future>
 #include <stdexcept>
 namespace {
 void checkSignal(int channels, float quality) {
@@ -69,6 +70,20 @@ void checkSignal(int channels, float quality) {
     float tail = 42;
     if (stream.Read(&tail, 1) || tail != 42 || stream.Read(nullptr, 0)) throw std::runtime_error("Decoder read beyond end");
     if (streamed != decoded) throw std::runtime_error("Streaming changed decoded signal");
+    const auto prepared = registry.Prepare(sample.Rate, sample.Channels, *sample.VorbisSetup);
+    if (prepared != registry.Prepare(sample.Rate, sample.Channels, *sample.VorbisSetup)) throw std::runtime_error("Vorbis decoder setup was not reused");
+    auto parallel = std::async(std::launch::async, [&] { return Sound::Vorbis::Decode(sample, registry); });
+    const auto concurrent = Sound::Vorbis::Decode(sample, registry);
+    if (parallel.get() != decoded || concurrent != decoded) throw std::runtime_error("Shared Vorbis setup changed concurrent decoding");
+    std::unique_ptr<Sound::Vorbis::Decoder> retained;
+    {
+        Sound::Vorbis::SetupRegistry temporary;
+        retained = std::make_unique<Sound::Vorbis::Decoder>(sample, temporary);
+    }
+    std::vector<float> retainedSamples(decoded.size());
+    if (retained->Read(retainedSamples.data(), sample.Frames) != sample.Frames || retainedSamples != decoded) {
+        throw std::runtime_error("Decoder did not retain its shared setup");
+    }
     auto pcmData = std::make_shared<Audio::PcmData>();
     pcmData->Layout = {sample.Rate, sample.Channels, sample.Frames};
     pcmData->Samples = decoded;

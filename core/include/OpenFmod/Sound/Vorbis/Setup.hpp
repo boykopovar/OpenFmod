@@ -10,13 +10,16 @@ namespace OpenFmod::Sound::Vorbis {
 struct Headers {
     std::array<std::vector<unsigned char>, 3> Packets;
 };
+class DecoderSetup;
 class SetupRegistry {
 public:
     std::shared_ptr<const Headers> Resolve(std::uint32_t rate, std::uint32_t channels, std::uint32_t checksum);
+    std::shared_ptr<const DecoderSetup> Prepare(std::uint32_t rate, std::uint32_t channels, std::uint32_t checksum);
 private:
     std::mutex mutex;
     std::map<std::array<std::uint32_t, 3>, std::shared_ptr<const Headers>> headers;
     std::map<std::array<std::uint32_t, 2>, int> positions;
+    std::map<std::array<std::uint32_t, 3>, std::shared_ptr<const DecoderSetup>> decoders;
 };
 }
 #endif

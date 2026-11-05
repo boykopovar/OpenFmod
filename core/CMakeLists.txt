@@ -6,6 +6,7 @@ add_library(OpenFmod STATIC
     src/Sound/Bank.cpp
     src/Sound/Metadata.cpp
     src/Sound/Vorbis/Setup.cpp
+    src/Sound/Vorbis/DecoderSetup.cpp
     src/Sound/Vorbis/Decoder.cpp
     src/Audio/VorbisSource.cpp
     src/Audio/PcmSource.cpp
